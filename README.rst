@@ -6,6 +6,14 @@ Keep your important files safe by making them unable to be modified or deleted
 by **any** user.
 
 
+Installation
+------------
+
+::
+
+    $ pip install entomb
+
+
 How it works
 ------------
 
@@ -69,9 +77,10 @@ Usage
 Development
 -----------
 
-Install the development dependencies, preferably in a virtualenv::
+Get set up, preferably in a virtualenv::
 
     $ make init
+    $ make install
 
 Lint the code::
 
@@ -81,9 +90,40 @@ Run the tests::
 
     $ make test
 
-Check the test coverage after running the tests::
+Check the test coverage::
 
     $ make coverage
+
+
+Releasing
+---------
+
+#. Ensure everything to go in the release is committed.
+
+#. Increment the version in ``setup.py``.
+
+#. Ensure CI runs without warnings or errors::
+
+    $ make ci
+
+#. Make and tag the release commit::
+
+    $ make release
+
+#. Build the package::
+
+    $ make package
+
+#. Publish the package to PyPI::
+
+    $ make publish
+
+#. Push to the repo and clean up packaging artifacts::
+
+    $ make push
+    $ make clean
+
+#. Create a GitHub release.
 
 
 Code style

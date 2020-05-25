@@ -1,3 +1,6 @@
 __pycache__/
 .coverage
 .tox/
+build/
+dist/
+entomb.egg-info/

@@ -2,6 +2,7 @@
 import argparse
 import os
 import subprocess
+import sys
 
 from entomb import (
     constants,
@@ -14,7 +15,7 @@ from entomb import (
 
 
 def main(argv):
-    """Run entomb.
+    """Run Entomb.
 
     Parameters
     ----------
@@ -123,6 +124,20 @@ def main(argv):
         dry_run=args.dry_run,
     )
     return 0
+
+
+def run():
+    """Call main() to run Entomb.
+
+    This is the console script entry point.
+
+    Returns
+    -------
+    None
+
+    """
+    # Run Entomb, exiting with a status code when finished.
+    sys.exit(main(sys.argv))
 
 
 def _check_argument_conflicts(args):

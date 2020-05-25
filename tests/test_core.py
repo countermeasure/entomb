@@ -12,7 +12,7 @@ from tests import (
 )
 
 
-EXECUTABLE = "entomb.py"
+EXECUTABLE = "entomb"
 
 
 class TestCore(unittest.TestCase):
