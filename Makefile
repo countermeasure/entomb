@@ -1,3 +1,10 @@
+ci: lint
+		@echo; \
+		echo "** For the tests to set or unset temporary test files'"; \
+		echo "** immutable attributes, root privileges are required."; \
+		echo; \
+		tox
+
 coverage:
 		@coverage report -m
 
