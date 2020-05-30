@@ -7,7 +7,7 @@ with open("README.rst", "r") as f:
 
 setuptools.setup(
     name="entomb",
-    version="0.0.1",
+    version="0.1.0",
     description="File immutability manager",
     long_description=long_description,
     long_description_content_type="text/x-rst",
