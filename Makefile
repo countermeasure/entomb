@@ -58,6 +58,7 @@ publish:
 push:
 	@git checkout master
 	@git push origin master
+	@git push origin v`python setup.py --version`
 
 release:
 	@git add setup.py
