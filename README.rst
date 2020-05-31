@@ -98,9 +98,15 @@ Check the test coverage::
 Releasing
 ---------
 
+#. Ensure the changelog includes everything to go in the release and is
+   committed.
+
 #. Ensure everything to go in the release is committed.
 
 #. Increment the version in ``setup.py``.
+
+#. Shift everything in the **Unreleased** section of the changelog to a new
+   section named with the new version number and the current date.
 
 #. Ensure CI runs without warnings or errors::
 
@@ -143,3 +149,9 @@ Code style
 #. Strings are enclosed with double quotes.
 
 #. The last item of a multi-line dictionary or list has a trailing comma.
+
+
+Changes
+-------
+
+For what has changed in each version, see `CHANGELOG.rst <CHANGELOG.rst>`_.

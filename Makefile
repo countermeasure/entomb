@@ -61,7 +61,7 @@ push:
 	@git push origin v`python setup.py --version`
 
 release:
-	@git add setup.py
+	@git add CHANGELOG.rst setup.py
 	@git commit -m "Release v`python setup.py --version`"
 	@git tag \
 		-a v`python setup.py --version` \
