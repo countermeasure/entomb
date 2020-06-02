@@ -5,6 +5,7 @@ import signal
 import subprocess
 import sys
 
+import entomb
 from entomb import (
     constants,
     exceptions,
@@ -339,6 +340,12 @@ def _parse_args(args):
         constants.UNSET_ARG,
         action="store_true",
         help="unset immutability",
+    )
+    parser.add_argument(
+        constants.VERSION_SHORT_ARG,
+        constants.VERSION_ARG,
+        action="version",
+        version="{} {}".format(entomb.__title__, entomb.__version__),
     )
 
     return parser.parse_args(args)

@@ -1,4 +1,5 @@
 import argparse
+import io
 import os
 import signal
 import subprocess
@@ -471,6 +472,17 @@ class TestCore(unittest.TestCase):
             unset=True,
         )
         self.assertEqual(actual, expected)
+
+        # Test --version without a path.
+        output = io.StringIO
+        with mock.patch("sys.stdout", new_callable=output) as mocked_stdout:
+            # Stop stderr being displayed.
+            with mock.patch("sys.stderr") as _:
+                # Stop the test exiting before it can complete.
+                with mock.patch("sys.exit") as _:
+                    core._parse_args(["--version"])
+        actual = mocked_stdout.getvalue()
+        self.assertRegex(actual, r"^Entomb \d+\.\d+\.\d+\n$")
 
     def test__print_argument_conflict_errors(self):
         """Test the _print_argument_conflict_errors function.

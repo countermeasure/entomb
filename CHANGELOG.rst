@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ----------
 
+Added
+~~~~~
+- Added ``--version`` / ``-v`` argument.
+
 Fixed
 ~~~~~
 - Exit gracefully on keyboard interrupt (``CTRL`` + ``C``) and termination

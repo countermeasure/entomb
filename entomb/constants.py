@@ -9,6 +9,8 @@ REPORT_ARG = "--report"
 REPORT_SHORT_ARG = "-r"
 UNSET_ARG = "--unset"
 UNSET_SHORT_ARG = "-u"
+VERSION_ARG = "--version"
+VERSION_SHORT_ARG = "-v"
 
 
 # Path types.
