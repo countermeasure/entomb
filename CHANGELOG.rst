@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ----------
 
+
+v0.2.0
+------
+*03 June 2020*
+
 Added
 ~~~~~
 - Added ``--version`` / ``-v`` argument.
