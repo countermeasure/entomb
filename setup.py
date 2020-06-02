@@ -1,19 +1,23 @@
 import setuptools
 
+import entomb
+
 
 with open("README.rst", "r") as f:
-    long_description = f.read()
+    LONG_DESCRIPTION = f.read()
 
+NAME = entomb.__title__.lower()
 
 setuptools.setup(
-    name="entomb",
-    version="0.1.0",
-    description="File immutability manager",
-    long_description=long_description,
+    name=NAME,
+    version=entomb.__version__,
+    description=entomb.__description__,
+    long_description=LONG_DESCRIPTION,
     long_description_content_type="text/x-rst",
-    author="Sky Christensen",
-    author_email="sky@skychristensen.com",
-    url="https://github.com/countermeasure/entomb",
+    author=entomb.__author__,
+    author_email=entomb.__author_email__,
+    license=entomb.__licence__,
+    url=entomb.__url__,
     packages=setuptools.find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -31,7 +35,7 @@ setuptools.setup(
     python_requires=">=3.5",
     entry_points={
         "console_scripts": [
-            "entomb=entomb.core:run",
+            "{}=entomb.core:run".format(NAME),
         ],
     },
 )

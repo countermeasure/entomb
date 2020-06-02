@@ -98,12 +98,14 @@ Check the test coverage::
 Releasing
 ---------
 
+#. Check out the ``master`` branch.
+
 #. Ensure the changelog includes everything to go in the release and is
    committed.
 
 #. Ensure everything to go in the release is committed.
 
-#. Increment the version in ``setup.py``.
+#. Increment the version in ``__init__.py``.
 
 #. Shift everything in the **Unreleased** section of the changelog to a new
    section named with the new version number and the current date.
