@@ -1,5 +1,6 @@
 import argparse
 import os
+import signal
 import subprocess
 import unittest
 import unittest.mock as mock
@@ -550,6 +551,38 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call(["sudo", "-v"], check=True, stderr=-2, stdout=-3),
             mock.call(),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+    def test__signal_handler(self):
+        """Test the _signal_handler function.
+
+        """
+        # Test a keyboard interrupt signal.
+        with mock.patch("builtins.print") as mocked_print:
+            with mock.patch("sys.exit") as mocked_exit:
+                mocked_exit.side_effect = print
+                core._signal_handler(signal.SIGINT, None)
+        expected = [
+            mock.call(),
+            mock.call(),
+            mock.call(">> Keyboard interrupt signal received. Exiting."),
+            mock.call(),
+            mock.call(1),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a termination signal.
+        with mock.patch("builtins.print") as mocked_print:
+            with mock.patch("sys.exit") as mocked_exit:
+                mocked_exit.side_effect = print
+                core._signal_handler(signal.SIGTERM, None)
+        expected = [
+            mock.call(),
+            mock.call(),
+            mock.call(">> Termination signal received. Exiting."),
+            mock.call(),
+            mock.call(1),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 

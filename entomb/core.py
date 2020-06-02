@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import signal
 import subprocess
 import sys
 
@@ -136,6 +137,10 @@ def run():
     None
 
     """
+    # Set handler for interrupt and termination signals.
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+
     # Run Entomb, exiting with a status code when finished.
     sys.exit(main(sys.argv))
 
@@ -401,6 +406,31 @@ def _prompt_for_sudo():
         stdout=subprocess.DEVNULL,
     )
     print()
+
+
+def _signal_handler(signum, frame):  # pylint: disable=unused-argument
+    """Print an interrupt or termination message, then exit.
+
+    Parameters
+    ----------
+    signum : int
+        The signal number. Either 2 (SIGINT) or 15 (SIGTERM).
+    frame : frame object
+        Unused.
+
+    Returns
+    -------
+    None
+
+    """
+    print()
+    print()
+    if signum == signal.SIGINT:
+        print(">> Keyboard interrupt signal received. Exiting.")
+    elif signum == signal.SIGTERM:
+        print(">> Termination signal received. Exiting.")
+    print()
+    sys.exit(1)
 
 
 def _user_has_root_privileges():

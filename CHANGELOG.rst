@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ----------
 
+Fixed
+~~~~~
+- Exit gracefully on keyboard interrupt (``CTRL`` + ``C``) and termination
+  signals.
+
 
 v0.1.0
 ------
