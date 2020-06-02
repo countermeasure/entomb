@@ -22,7 +22,7 @@ ci: lint
 	@tox
 
 clean:
-	@rm -rf build/ dist/ entomb.egg-info/
+	@rm -rf build/ dist/
 
 coverage: test
 	@coverage report -m
