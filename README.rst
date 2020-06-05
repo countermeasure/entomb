@@ -2,8 +2,9 @@
 Entomb
 ======
 
-Keep your important files safe by making them unable to be modified or deleted
-by **any** user.
+    Keep your important files safe.
+
+    Make them unable to be modified or deleted by **any** user, even root.
 
 
 Installation
@@ -100,14 +101,14 @@ Releasing
 
 #. Check out the ``master`` branch.
 
-#. Ensure the changelog includes everything to go in the release and is
+#. Ensure ``CHANGELOG.rst`` includes everything to go in the release and is
    committed.
 
 #. Ensure everything to go in the release is committed.
 
 #. Increment the version in ``__init__.py``.
 
-#. Shift everything in the **Unreleased** section of the changelog to a new
+#. Shift everything in the **Unreleased** section of ``CHANGELOG.rst`` to a new
    section named with the new version number and the current date.
 
 #. Ensure CI runs without warnings or errors::
@@ -156,4 +157,4 @@ Code style
 Changes
 -------
 
-For what has changed in each version, see `CHANGELOG.rst <CHANGELOG.rst>`_.
+For what has changed in each version, see ``CHANGELOG.rst``.
