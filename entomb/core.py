@@ -30,9 +30,6 @@ def main(argv):
         The exit status.
 
     """
-    # Remove the executable from the command line input.
-    argv.pop(0)
-
     # Parse the command line input.
     args = _parse_args(argv)
 
@@ -287,13 +284,13 @@ def _get_path_type(path):
     return path_type
 
 
-def _parse_args(args):
+def _parse_args(argv):
     """Parse the command line input.
 
     Parameters
     ----------
-    args : list of str
-        List of arguments from the command line.
+    argv : list of str
+        List of arguments from the command line, including the executable.
 
     Returns
     -------
@@ -348,7 +345,7 @@ def _parse_args(args):
         version="{} {}".format(entomb.__title__, entomb.__version__),
     )
 
-    return parser.parse_args(args)
+    return parser.parse_args(argv[1:])
 
 
 def _print_argument_conflict_errors(conflicts):

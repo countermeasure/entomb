@@ -446,7 +446,7 @@ class TestCore(unittest.TestCase):
 
         """
         # Test just a directory path.
-        actual = core._parse_args([constants.DIRECTORY_PATH])
+        actual = core._parse_args([EXECUTABLE, constants.DIRECTORY_PATH])
         expected = argparse.Namespace(
             dry_run=False,
             include_git=False,
@@ -460,7 +460,7 @@ class TestCore(unittest.TestCase):
 
         # Test a link path with --list--immutable and --u.
         actual = core._parse_args(
-            [constants.LINK_PATH, "--list-immutable", "-u"],
+            [EXECUTABLE, constants.LINK_PATH, "--list-immutable", "-u"],
         )
         expected = argparse.Namespace(
             dry_run=False,
@@ -480,7 +480,7 @@ class TestCore(unittest.TestCase):
             with mock.patch("sys.stderr") as _:
                 # Stop the test exiting before it can complete.
                 with mock.patch("sys.exit") as _:
-                    core._parse_args(["--version"])
+                    core._parse_args([EXECUTABLE, "--version"])
         actual = mocked_stdout.getvalue()
         self.assertRegex(actual, r"^Entomb \d+\.\d+\.\d+\n$")
 

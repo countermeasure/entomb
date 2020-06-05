@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ----------
 
+Fixed
+~~~~~
+- Stopped crash caused by running the application with no arguments.
+
 
 v0.2.0
 ------
