@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ----------
 
+
+v0.2.1
+------
+*06 June 2020*
+
 Fixed
 ~~~~~
 - Stopped crash caused by running the application with no arguments.
