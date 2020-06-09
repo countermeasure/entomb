@@ -36,20 +36,21 @@ Examples
 
 ::
 
-    # Make all files in ~/photos immutable.
-    entomb.py ~/photos
+    $ # Make all files in ~/photos immutable.
+    $ entomb ~/photos
 
-    # List all files in ~/photos which are not immutable.
-    entomb.py --list-mutable ~/photos
+    $ # List all files in ~/photos which are not immutable.
+    $ entomb --list-mutable ~/photos
 
-    # Report on how many files in ~/photos are and aren't immutable.
-    entomb.py --report ~/photos
+    $ # Report on how many files in ~/photos are and aren't immutable.
+    $ entomb --report ~/photos
 
-    # Do a dry run on ~/photos, including any git files/directories.
-    entomb.py -d -g ~/photos
+    $ # Do a dry run on ~/photos, including any git files/directories.
+    $ entomb -d -g ~/photos
 
-    # Make all files in ~/photos mutable (i.e. unset the immutable attribute).
-    entomb.py -u ~/photos
+    $ # Make all files in ~/photos mutable (i.e. unset the immutable
+    $ # attribute).
+    $ entomb -u ~/photos
 
 
 Usage
@@ -57,8 +58,8 @@ Usage
 
 ::
 
-    $ ./entomb.py --help
-    usage: entomb.py [options] path
+    $ entomb --help
+    usage: entomb [options] path
 
     Manage file immutability.
 
@@ -73,6 +74,7 @@ Usage
       --list-mutable     list all mutable files
       -r, --report       display a status report
       -u, --unset        unset immutability
+      -v, --version      show program's version number and exit
 
 
 Development
