@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from entomb import utilities
@@ -35,6 +36,11 @@ def list_files(path, immutable, include_git):
     list_header = "{} files".format(state.title())
     utilities.print_header(list_header)
 
+    # Set up the progress bar.
+    total_file_paths = utilities.count_file_paths(path, include_git)
+    start_time = datetime.datetime.now()
+    utilities.print_progress_bar(start_time, 0, total_file_paths)
+
     # Walk the tree.
     for file_path in utilities.file_paths(path, include_git):
 
@@ -50,15 +56,16 @@ def list_files(path, immutable, include_git):
 
             file_count += 1
 
-        # Update the progress message.
-        progress = "Examined {} files and {} links".format(
-            file_count,
-            link_count,
+        # Update the progress bar.
+        utilities.print_progress_bar(
+            start_time,
+            (file_count + link_count),
+            total_file_paths,
+            1,
         )
-        print(progress, end="\r")
 
     # Clear the final progress message.
-    _clear_line()
+    utilities.clear_line()
 
     # If the list is empty, print an empty indicator.
     if printed_file_count == 0:
@@ -70,17 +77,6 @@ def list_files(path, immutable, include_git):
     print("{} files were examined".format(file_count))
     print("{} files are {}".format(printed_file_count, state))
     print()
-
-
-def _clear_line():
-    """Clear the current line in the terminal.
-
-    Returns
-    -------
-    None
-
-    """
-    print("\033[K", end="")
 
 
 def _print_the_path(path, immutable):

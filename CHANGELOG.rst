@@ -9,6 +9,7 @@ Unreleased
 Added
 ~~~~~
 - Added link count to report.
+- Added progress bar.
 
 Fixed
 ~~~~~

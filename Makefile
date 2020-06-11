@@ -43,7 +43,8 @@ lint:
 	@echo "Running Pylint"
 	@pylint *.py
 	@pylint entomb/.
-	@pylint --disable=duplicate-code,protected-access tests/.
+	@pylint --disable=duplicate-code,protected-access,too-many-statements \
+		tests/.
 	@echo "Running twine check"
 	@python setup.py sdist > /dev/null
 	@twine check dist/*

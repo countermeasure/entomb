@@ -1,7 +1,11 @@
+import datetime
 import math
 import os
 
-from entomb import utilities
+from entomb import (
+    constants,
+    utilities,
+)
 
 
 @utilities.hide_cursor()
@@ -22,7 +26,6 @@ def produce_report(path, include_git):
     """
     # Set up.
     directory_count = 0
-    file_count = 0
     immutable_file_count = 0
     link_count = 0
     mutable_file_count = 0
@@ -36,9 +39,11 @@ def produce_report(path, include_git):
         _print_file_or_link_report(path)
         return
 
-    # Print the progress header and first progress message.
+    # Print the progress header and set up the progress bar.
     utilities.print_header("Progress")
-    print("-", end="\r")
+    total_file_paths = utilities.count_file_paths(path, include_git)
+    start_time = datetime.datetime.now()
+    utilities.print_progress_bar(start_time, 0, total_file_paths)
 
     # Walk the tree.
     for root_dir, dirnames, filenames in os.walk(path):
@@ -50,7 +55,7 @@ def produce_report(path, include_git):
         # Count the directory.
         directory_count += 1
 
-        # Examine each file.
+        # Examine each file path.
         for filename in filenames:
             file_path = os.path.join(root_dir, filename)
 
@@ -60,28 +65,23 @@ def produce_report(path, include_git):
 
             # Count the file.
             else:
-                file_count += 1
                 if utilities.file_is_immutable(file_path):
                     immutable_file_count += 1
                 else:
                     mutable_file_count += 1
 
-            # Update the progress message.
-            progress = (
-                "Examined {} files and {} links in {} directories".format(
-                    file_count,
-                    link_count,
-                    directory_count,
-                )
+            # Update the progress bar.
+            utilities.print_progress_bar(
+                start_time,
+                (immutable_file_count + mutable_file_count + link_count),
+                total_file_paths,
             )
-            print(progress, end="\r")
 
     print()
     print()
 
     _print_full_report(
         directory_count,
-        file_count,
         link_count,
         immutable_file_count,
         mutable_file_count,
@@ -117,16 +117,14 @@ def _print_file_or_link_report(path):
     print()
 
 
-def _print_full_report(directory_count, file_count, link_count,
-                       immutable_file_count, mutable_file_count):
+def _print_full_report(directory_count, link_count, immutable_file_count,
+                       mutable_file_count):
     """Print a report for a path which is a file or a link.
 
     Parameters
     ----------
     directory_count : int
         The number of directories counted.
-    file_count : int
-        The number of files counted.
     link_count : int
         The number of links counted.
     immutable_file_count : int
@@ -141,28 +139,47 @@ def _print_full_report(directory_count, file_count, link_count,
     """
     # Do calculations.
     subdirectory_count = directory_count - 1
+    total_file_count = immutable_file_count + mutable_file_count
 
     try:
-        entombed_proportion = immutable_file_count / file_count
+        entombed_proportion = immutable_file_count / total_file_count
         entombed_percentage_integer = math.floor(entombed_proportion * 100)
         entombed_percentage = "{}%".format(entombed_percentage_integer)
     except ZeroDivisionError:
         entombed_percentage = "n/a"
 
     # Print the report.
-    report_separator = "-" * 40
+    report_separator = "-" * constants.TABLE_WIDTH
     print("Report")
     print(report_separator)
-    print("Immutable files", "{:,}".format(immutable_file_count).rjust(24))
+    print(
+        "Immutable files",
+        "{:,}".format(immutable_file_count).rjust(constants.TABLE_WIDTH - 16),
+    )
     print(report_separator)
-    print("Mutable files", "{:,}".format(mutable_file_count).rjust(26))
+    print(
+        "Mutable files",
+        "{:,}".format(mutable_file_count).rjust(constants.TABLE_WIDTH - 14),
+    )
     print(report_separator)
-    print("All files", "{:,}".format(file_count).rjust(30))
+    print(
+        "All files",
+        "{:,}".format(total_file_count).rjust(constants.TABLE_WIDTH - 10),
+    )
     print(report_separator)
-    print("Entombed", entombed_percentage.rjust(31))
+    print(
+        "Entombed",
+        entombed_percentage.rjust(constants.TABLE_WIDTH - 9),
+    )
     print(report_separator)
-    print("Links", "{:,}".format(link_count).rjust(34))
+    print(
+        "Links",
+        "{:,}".format(link_count).rjust(constants.TABLE_WIDTH - 6),
+    )
     print(report_separator)
-    print("Sub-directories", "{:,}".format(subdirectory_count).rjust(24))
+    print(
+        "Sub-directories",
+        "{:,}".format(subdirectory_count).rjust(constants.TABLE_WIDTH - 16),
+    )
     print(report_separator)
     print()

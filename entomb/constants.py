@@ -13,6 +13,10 @@ VERSION_ARG = "--version"
 VERSION_SHORT_ARG = "-v"
 
 
+# Formatting
+TABLE_WIDTH = 40
+
+
 # Path types.
 DIRECTORY = "directory"
 FILE = "file"

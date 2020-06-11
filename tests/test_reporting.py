@@ -86,37 +86,16 @@ class TestReporting(unittest.TestCase):
             mock.call(),
             mock.call("Progress"),
             mock.call("--------"),
-            mock.call("-", end="\r"),
+            mock.call("Counting file paths: 0", end="\r"),
+            mock.call("\033[K", end=""),
+            mock.call("\033[K", end=""),
             mock.call(
-                "Examined 1 files and 0 links in 1 directories",
+                "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call(
-                "Examined 1 files and 1 links in 1 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 2 files and 1 links in 1 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 3 files and 1 links in 3 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 4 files and 1 links in 4 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 5 files and 1 links in 5 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 5 files and 2 links in 5 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 6 files and 2 links in 5 directories",
+                "████████████████████████████████████████",
                 end="\r",
             ),
             mock.call(),
@@ -152,29 +131,16 @@ class TestReporting(unittest.TestCase):
             mock.call(),
             mock.call("Progress"),
             mock.call("--------"),
-            mock.call("-", end="\r"),
+            mock.call("Counting file paths: 0", end="\r"),
+            mock.call("\033[K", end=""),
+            mock.call("\033[K", end=""),
             mock.call(
-                "Examined 1 files and 0 links in 1 directories",
+                "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call(
-                "Examined 1 files and 1 links in 1 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 2 files and 1 links in 1 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 3 files and 1 links in 3 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 3 files and 2 links in 3 directories",
-                end="\r",
-            ),
-            mock.call(
-                "Examined 4 files and 2 links in 3 directories",
+                "████████████████████████████████████████",
                 end="\r",
             ),
             mock.call(),
@@ -210,7 +176,13 @@ class TestReporting(unittest.TestCase):
             mock.call(),
             mock.call("Progress"),
             mock.call("--------"),
-            mock.call("-", end="\r"),
+            mock.call("Counting file paths: 0", end="\r"),
+            mock.call("\033[K", end=""),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "████████████████████████████████████████",
+                end="\r",
+            ),
             mock.call(),
             mock.call(),
             mock.call("Report"),
@@ -277,7 +249,6 @@ class TestReporting(unittest.TestCase):
         with mock.patch("builtins.print") as mocked_print:
             reporting._print_full_report(
                 directory_count=6,
-                file_count=35,
                 link_count=5,
                 immutable_file_count=8,
                 mutable_file_count=27,
@@ -305,7 +276,6 @@ class TestReporting(unittest.TestCase):
         with mock.patch("builtins.print") as mocked_print:
             reporting._print_full_report(
                 directory_count=3,
-                file_count=0,
                 link_count=0,
                 immutable_file_count=0,
                 mutable_file_count=0,

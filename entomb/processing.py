@@ -1,3 +1,4 @@
+import datetime
 import os
 import subprocess
 
@@ -33,15 +34,19 @@ def process_objects(path, immutable, include_git, dry_run):
     file_count = 0
     link_count = 0
     operation = "entombed" if immutable else "unset"
-    operation_message = "Entomb objects" if immutable else "Unset objects"
 
     # Print the operation.
-    print(operation_message)
+    if immutable:
+        print("Entomb objects")
+    else:
+        print("Unset objects")
     print()
 
-    # Print the progress header and first progress message.
+    # Print the progress header and set up the progress bar.
     utilities.print_header("Progress")
-    print("-", end="\r")
+    total_file_paths = utilities.count_file_paths(path, include_git)
+    start_time = datetime.datetime.now()
+    utilities.print_progress_bar(start_time, 0, total_file_paths)
 
     # Walk the tree.
     for file_path in utilities.file_paths(path, include_git):
@@ -70,14 +75,12 @@ def process_objects(path, immutable, include_git, dry_run):
             if change_attribute:
                 attribute_changed_count += 1
 
-        # Update the progress message.
-        progress = "{} {} of {} files and ignored {} links".format(
-            operation.title(),
-            attribute_changed_count,
-            file_count,
-            link_count,
+        # Update the progress bar.
+        utilities.print_progress_bar(
+            start_time,
+            (file_count + link_count),
+            total_file_paths,
         )
-        print(progress, end="\r")
 
     print()
     print()
