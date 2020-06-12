@@ -3,6 +3,7 @@ import os
 from entomb import utilities
 
 
+@utilities.hide_cursor()
 def list_files(path, immutable, include_git):
     """Print a list of the immutable or mutable files on the path.
 

@@ -108,6 +108,22 @@ class TestUtilities(unittest.TestCase):
             # Ths exception will only be raised once the generator is iterated.
             next(paths)
 
+    def test_hide_cursor(self):
+        """Test the hide_cursor function.
+
+        """
+        with mock.patch("builtins.print") as mocked_print:
+            # The function is used as a decorator, but is easier to test as a
+            # context manager.
+            with utilities.hide_cursor():
+                print("testing")
+        expected = [
+            mock.call("\033[?25l", end=""),
+            mock.call("testing"),
+            mock.call("\033[?25h", end=""),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
     def test_print_header(self):
         """Test the print_header function.
 

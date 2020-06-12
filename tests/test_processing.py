@@ -34,6 +34,7 @@ class TestProcessing(unittest.TestCase):
                 dry_run=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Entomb objects"),
             mock.call(),
             mock.call("Progress"),
@@ -56,6 +57,7 @@ class TestProcessing(unittest.TestCase):
             mock.call("All 4 files are now entombed"),
             mock.call("All 2 links were ignored"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -79,6 +81,7 @@ class TestProcessing(unittest.TestCase):
                 dry_run=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Unset objects"),
             mock.call(),
             mock.call("Progress"),
@@ -103,6 +106,7 @@ class TestProcessing(unittest.TestCase):
             mock.call("All 6 files are now unset"),
             mock.call("All 2 links were ignored"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -122,6 +126,7 @@ class TestProcessing(unittest.TestCase):
                 dry_run=True,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Entomb objects"),
             mock.call(),
             mock.call("Progress"),
@@ -144,6 +149,7 @@ class TestProcessing(unittest.TestCase):
             mock.call("All 4 files are now entombed"),
             mock.call("All 2 links were ignored"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -163,6 +169,7 @@ class TestProcessing(unittest.TestCase):
                 dry_run=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Entomb objects"),
             mock.call(),
             mock.call("Progress"),
@@ -174,6 +181,7 @@ class TestProcessing(unittest.TestCase):
             mock.call("-------"),
             mock.call("No files were found"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 

@@ -77,6 +77,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Operation"),
             mock.call("---------"),
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Progress"),
@@ -123,6 +124,7 @@ class TestCore(unittest.TestCase):
             mock.call("Sub-directories", "                       2"),
             mock.call("----------------------------------------"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -143,6 +145,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Operation"),
             mock.call("---------"),
+            mock.call("\033[?25l", end=""),
             mock.call("List immutable files"),
             mock.call(),
             mock.call("Immutable files"),
@@ -158,6 +161,7 @@ class TestCore(unittest.TestCase):
             mock.call("2 files were examined"),
             mock.call("1 files are immutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -180,6 +184,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Operation"),
             mock.call("---------"),
+            mock.call("\033[?25l", end=""),
             mock.call("List mutable files"),
             mock.call(),
             mock.call("Mutable files"),
@@ -203,6 +208,7 @@ class TestCore(unittest.TestCase):
             mock.call("6 files were examined"),
             mock.call("4 files are mutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -223,6 +229,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Operation"),
             mock.call("---------"),
+            mock.call("\033[?25l", end=""),
             mock.call("Entomb objects"),
             mock.call(),
             mock.call("Progress"),
@@ -245,6 +252,7 @@ class TestCore(unittest.TestCase):
             mock.call("All 4 files are now entombed"),
             mock.call("All 2 links were ignored"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -263,6 +271,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Operation"),
             mock.call("---------"),
+            mock.call("\033[?25l", end=""),
             mock.call("Unset objects"),
             mock.call(),
             mock.call("Progress"),
@@ -280,6 +289,7 @@ class TestCore(unittest.TestCase):
             mock.call("All 1 files are now unset"),
             mock.call("All 0 links were ignored"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 

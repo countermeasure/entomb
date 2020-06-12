@@ -32,6 +32,7 @@ class TestListing(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("List immutable files"),
             mock.call(),
             mock.call("Immutable files"),
@@ -51,6 +52,7 @@ class TestListing(unittest.TestCase):
             mock.call("4 files were examined"),
             mock.call("2 files are immutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -62,6 +64,7 @@ class TestListing(unittest.TestCase):
                 include_git=True,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("List immutable files"),
             mock.call(),
             mock.call("Immutable files"),
@@ -83,6 +86,7 @@ class TestListing(unittest.TestCase):
             mock.call("6 files were examined"),
             mock.call("2 files are immutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -94,6 +98,7 @@ class TestListing(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("List mutable files"),
             mock.call(),
             mock.call("Mutable files"),
@@ -113,6 +118,7 @@ class TestListing(unittest.TestCase):
             mock.call("4 files were examined"),
             mock.call("2 files are mutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -124,6 +130,7 @@ class TestListing(unittest.TestCase):
                 include_git=True,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("List mutable files"),
             mock.call(),
             mock.call("Mutable files"),
@@ -147,6 +154,7 @@ class TestListing(unittest.TestCase):
             mock.call("6 files were examined"),
             mock.call("4 files are mutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -170,6 +178,7 @@ class TestListing(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("List mutable files"),
             mock.call(),
             mock.call("Mutable files"),
@@ -188,6 +197,7 @@ class TestListing(unittest.TestCase):
             mock.call("4 files were examined"),
             mock.call("0 files are mutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 

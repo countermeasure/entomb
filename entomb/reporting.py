@@ -4,6 +4,7 @@ import os
 from entomb import utilities
 
 
+@utilities.hide_cursor()
 def produce_report(path, include_git):
     """Print a report.
 

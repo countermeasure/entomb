@@ -10,6 +10,10 @@ Added
 ~~~~~
 - Added link count to report.
 
+Fixed
+~~~~~
+- Hide the cursor when it's not needed.
+
 
 v0.2.1
 ------

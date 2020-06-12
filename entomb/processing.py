@@ -7,6 +7,7 @@ from entomb import (
 )
 
 
+@utilities.hide_cursor()
 def process_objects(path, immutable, include_git, dry_run):
     """Set or unset the immutable attribute for all files on a path.
 

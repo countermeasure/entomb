@@ -27,12 +27,14 @@ class TestReporting(unittest.TestCase):
         with mock.patch("builtins.print") as mocked_print:
             reporting.produce_report(constants.LINK_PATH, include_git=True)
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Report"),
             mock.call("------"),
             mock.call("A link has no immutable attribute"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -43,12 +45,14 @@ class TestReporting(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Report"),
             mock.call("------"),
             mock.call("File is immutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -59,12 +63,14 @@ class TestReporting(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Report"),
             mock.call("------"),
             mock.call("File is mutable"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -75,6 +81,7 @@ class TestReporting(unittest.TestCase):
                 include_git=True,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Progress"),
@@ -129,6 +136,7 @@ class TestReporting(unittest.TestCase):
             mock.call("Sub-directories", "                       4"),
             mock.call("----------------------------------------"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -139,6 +147,7 @@ class TestReporting(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Progress"),
@@ -185,6 +194,7 @@ class TestReporting(unittest.TestCase):
             mock.call("Sub-directories", "                       2"),
             mock.call("----------------------------------------"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
@@ -195,6 +205,7 @@ class TestReporting(unittest.TestCase):
                 include_git=False,
             )
         expected = [
+            mock.call("\033[?25l", end=""),
             mock.call("Produce report"),
             mock.call(),
             mock.call("Progress"),
@@ -217,6 +228,7 @@ class TestReporting(unittest.TestCase):
             mock.call("Sub-directories", "                       0"),
             mock.call("----------------------------------------"),
             mock.call(),
+            mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 

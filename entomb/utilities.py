@@ -1,5 +1,6 @@
 import os
 import subprocess
+from contextlib import contextmanager
 
 from entomb import exceptions
 
@@ -90,6 +91,27 @@ def file_paths(path, include_git):
 
         for filename in filenames:
             yield os.path.join(root_dir, filename)
+
+
+@contextmanager
+def hide_cursor():
+    """Hide the cursor and then finally show it again.
+
+    Used as a decorator to hide the cursor when a function starts and
+    show the cursor again when the function finishes or an exception occurs.
+
+    Yields
+    ------
+    None
+
+    """
+    # Hide the cursor.
+    print("\033[?25l", end="")
+    try:
+        yield
+    finally:
+        # Show the cursor.
+        print("\033[?25h", end="")
 
 
 def print_header(header):
