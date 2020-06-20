@@ -1,5 +1,4 @@
 import os
-import sys
 
 from entomb import utilities
 
@@ -80,8 +79,7 @@ def _clear_line():
     None
 
     """
-    sys.stdout.write("\033[K")
-    sys.stdout.flush()
+    print("\033[K", end="")
 
 
 def _print_the_path(path, immutable):

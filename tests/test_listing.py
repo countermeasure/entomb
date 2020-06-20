@@ -44,6 +44,7 @@ class TestListing(unittest.TestCase):
             mock.call("Examined 3 files and 1 links", end="\r"),
             mock.call("Examined 3 files and 2 links", end="\r"),
             mock.call("Examined 4 files and 2 links", end="\r"),
+            mock.call("\033[K", end=""),
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
@@ -75,6 +76,7 @@ class TestListing(unittest.TestCase):
             mock.call("Examined 5 files and 1 links", end="\r"),
             mock.call("Examined 5 files and 2 links", end="\r"),
             mock.call("Examined 6 files and 2 links", end="\r"),
+            mock.call("\033[K", end=""),
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
@@ -104,6 +106,7 @@ class TestListing(unittest.TestCase):
             mock.call("Examined 3 files and 2 links", end="\r"),
             mock.call("/tmp/entomb_testing/subdirectory/mutable.txt"),
             mock.call("Examined 4 files and 2 links", end="\r"),
+            mock.call("\033[K", end=""),
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
@@ -137,6 +140,7 @@ class TestListing(unittest.TestCase):
             mock.call("Examined 5 files and 2 links", end="\r"),
             mock.call("/tmp/entomb_testing/subdirectory/mutable.txt"),
             mock.call("Examined 6 files and 2 links", end="\r"),
+            mock.call("\033[K", end=""),
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
@@ -176,6 +180,7 @@ class TestListing(unittest.TestCase):
             mock.call("Examined 3 files and 1 links", end="\r"),
             mock.call("Examined 3 files and 2 links", end="\r"),
             mock.call("Examined 4 files and 2 links", end="\r"),
+            mock.call("\033[K", end=""),
             mock.call("-"),
             mock.call(),
             mock.call("Summary"),
@@ -190,13 +195,10 @@ class TestListing(unittest.TestCase):
         """Test the _clear_line function.
 
         """
-        with mock.patch("sys.stdout") as mocked_stdout:
+        with mock.patch("builtins.print") as mocked_print:
             listing._clear_line()
-        expected = [
-            mock.call.write("\x1b[K"),
-            mock.call.flush(),
-        ]
-        self.assertEqual(mocked_stdout.mock_calls, expected)
+        expected = [mock.call("\033[K", end="")]
+        self.assertEqual(mocked_print.mock_calls, expected)
 
     def test__print_the_path(self):
         """Test the _print_the_path function.
