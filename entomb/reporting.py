@@ -81,6 +81,7 @@ def produce_report(path, include_git):
     _print_full_report(
         directory_count,
         file_count,
+        link_count,
         immutable_file_count,
         mutable_file_count,
     )
@@ -115,8 +116,8 @@ def _print_file_or_link_report(path):
     print()
 
 
-def _print_full_report(directory_count, file_count, immutable_file_count,
-                       mutable_file_count):
+def _print_full_report(directory_count, file_count, link_count,
+                       immutable_file_count, mutable_file_count):
     """Print a report for a path which is a file or a link.
 
     Parameters
@@ -125,6 +126,8 @@ def _print_full_report(directory_count, file_count, immutable_file_count,
         The number of directories counted.
     file_count : int
         The number of files counted.
+    link_count : int
+        The number of links counted.
     immutable_file_count : int
         The number of immutable files counted.
     mutable_file_count : int
@@ -156,6 +159,8 @@ def _print_full_report(directory_count, file_count, immutable_file_count,
     print("All files", "{:,}".format(file_count).rjust(30))
     print(report_separator)
     print("Entombed", entombed_percentage.rjust(31))
+    print(report_separator)
+    print("Links", "{:,}".format(link_count).rjust(34))
     print(report_separator)
     print("Sub-directories", "{:,}".format(subdirectory_count).rjust(24))
     print(report_separator)

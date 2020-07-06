@@ -118,6 +118,8 @@ class TestCore(unittest.TestCase):
             mock.call("----------------------------------------"),
             mock.call("Entombed", "                            50%"),
             mock.call("----------------------------------------"),
+            mock.call("Links", "                                 2"),
+            mock.call("----------------------------------------"),
             mock.call("Sub-directories", "                       2"),
             mock.call("----------------------------------------"),
             mock.call(),

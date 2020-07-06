@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ----------
 
+Added
+~~~~~
+- Added link count to report.
+
 
 v0.2.1
 ------
