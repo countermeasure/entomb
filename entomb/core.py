@@ -30,6 +30,10 @@ def main(argv):
         The exit status.
 
     """
+    # Set handler for interrupt and termination signals.
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+
     # Parse the command line input.
     args = _parse_args(argv)
 
@@ -135,10 +139,6 @@ def run():
     None
 
     """
-    # Set handler for interrupt and termination signals.
-    signal.signal(signal.SIGINT, _signal_handler)
-    signal.signal(signal.SIGTERM, _signal_handler)
-
     # Run Entomb, exiting with a status code when finished.
     sys.exit(main(sys.argv))
 
