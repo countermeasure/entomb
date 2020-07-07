@@ -1,4 +1,16 @@
-# As the default target, help must be first.
+ci: lint
+	@echo
+	@echo "** For the tests to set or unset temporary test files'"
+	@echo "** immutable attributes, root privileges are required."
+	@echo
+	@tox
+
+clean:
+	@rm -rf build/ dist/
+
+coverage: test
+	@coverage report -m
+
 help:
 	@echo
 	@echo "  make ci          Run continuous integration checks locally."
@@ -13,19 +25,6 @@ help:
 	@echo "  make release     Release to PyPI."
 	@echo "  make tag         Make the Git tag for the release."
 	@echo "  make test        Run the tests in the development environment."
-
-ci: lint
-	@echo
-	@echo "** For the tests to set or unset temporary test files'"
-	@echo "** immutable attributes, root privileges are required."
-	@echo
-	@tox
-
-clean:
-	@rm -rf build/ dist/
-
-coverage: test
-	@coverage report -m
 
 init:
 	@pip install -r requirements.txt
@@ -74,3 +73,5 @@ test:
 	@echo "** immutable attributes, root privileges are required."
 	@echo
 	@coverage run -m unittest
+
+.DEFAULT_GOAL:= help
