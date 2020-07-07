@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ----------
 
+
+v0.3.0
+------
+*07 July 2020*
+
 Added
 ~~~~~
 - Added link count to report.
