@@ -1,4 +1,6 @@
+import contextlib
 import os
+import subprocess
 import unittest
 import unittest.mock as mock
 
@@ -59,19 +61,34 @@ class TestProcessing(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("All 4 files are now entombed"),
+            mock.call(
+                "All 4 files for which immutability can be set are now "
+                "entombed",
+            ),
             mock.call("All 2 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/fifo",
+            ),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/readable_by_root.txt",
+            ),
             mock.call(),
             mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
-        # Confirm that all files were made immutable.
+        # Confirm that all files for which the immutable attribute is settable
+        # were made immutable.
         for root_dir, _, filenames in os.walk(constants.DIRECTORY_PATH):
             file_should_be_immutable = ".git" not in root_dir
             for filename in filenames:
                 file_path = os.path.join(root_dir, filename)
-                if not os.path.islink(file_path):
+                with contextlib.suppress(subprocess.CalledProcessError):
                     self.assertEqual(
                         helpers.file_is_immutable(file_path),
                         file_should_be_immutable,
@@ -111,18 +128,32 @@ class TestProcessing(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("All 6 files are now unset"),
+            mock.call(
+                "All 6 files for which immutability can be set are now unset",
+            ),
             mock.call("All 2 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/fifo",
+            ),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/readable_by_root.txt",
+            ),
             mock.call(),
             mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
-        # Confirm that all files were made mutable.
+        # Confirm that all files for which the immutable attribute is settable
+        # were made mutable.
         for root_dir, _, filenames in os.walk(constants.DIRECTORY_PATH):
             for filename in filenames:
                 file_path = os.path.join(root_dir, filename)
-                if not os.path.islink(file_path):
+                with contextlib.suppress(subprocess.CalledProcessError):
                     self.assertFalse(helpers.file_is_immutable(file_path))
 
         # Test a dry-run for making files immutable excluding git.
@@ -159,8 +190,22 @@ class TestProcessing(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("All 4 files are now entombed"),
+            mock.call(
+                "All 4 files for which immutability can be set are now "
+                "entombed",
+            ),
             mock.call("All 2 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/fifo",
+            ),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/readable_by_root.txt",
+            ),
             mock.call(),
             mock.call("\033[?25h", end=""),
         ]
@@ -170,7 +215,7 @@ class TestProcessing(unittest.TestCase):
         for root_dir, _, filenames in os.walk(constants.DIRECTORY_PATH):
             for filename in filenames:
                 file_path = os.path.join(root_dir, filename)
-                if not os.path.islink(file_path):
+                with contextlib.suppress(subprocess.CalledProcessError):
                     self.assertFalse(helpers.file_is_immutable(file_path))
 
         # Test processing an empty directory.
@@ -212,6 +257,107 @@ class TestProcessing(unittest.TestCase):
                 include_git=True,
                 dry_run=False,
             )
+
+        # Test a named pipe.
+        with mock.patch("builtins.print") as mocked_print:
+            processing.process_objects(
+                constants.NAMED_PIPE_PATH,
+                immutable=False,
+                include_git=True,
+                dry_run=False,
+            )
+        expected = [
+            mock.call("\033[?25l", end=""),
+            mock.call("Unset objects"),
+            mock.call(),
+            mock.call("Progress"),
+            mock.call("--------"),
+            mock.call("Counting file paths: 0", end="\r"),
+            mock.call("\033[K", end=""),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
+                end="\r",
+            ),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "████████████████████████████████████████",
+                end="\r",
+            ),
+            mock.call(),
+            mock.call(),
+            mock.call("Changes"),
+            mock.call("-------"),
+            mock.call("Unset 0 files"),
+            mock.call(),
+            mock.call("Summary"),
+            mock.call("-------"),
+            mock.call(
+                "All 0 files for which immutability can be set are now unset",
+            ),
+            mock.call("All 0 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/fifo",
+            ),
+            mock.call(),
+            mock.call("\033[?25h", end=""),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a file which is readable only by root.
+        with mock.patch("builtins.print") as mocked_print:
+            processing.process_objects(
+                constants.READABLE_BY_ROOT_FILE_PATH,
+                immutable=True,
+                include_git=False,
+                dry_run=False,
+            )
+        expected = [
+            mock.call("\033[?25l", end=""),
+            mock.call("Entomb objects"),
+            mock.call(),
+            mock.call("Progress"),
+            mock.call("--------"),
+            mock.call("Counting file paths: 0", end="\r"),
+            mock.call("\033[K", end=""),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
+                end="\r",
+            ),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "████████████████████████████████████████",
+                end="\r",
+            ),
+            mock.call(),
+            mock.call(),
+            mock.call("Changes"),
+            mock.call("-------"),
+            mock.call("Entombed 0 files"),
+            mock.call(),
+            mock.call("Summary"),
+            mock.call("-------"),
+            mock.call(
+                "All 0 files for which immutability can be set are now "
+                "entombed",
+            ),
+            mock.call("All 0 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/readable_by_root.txt",
+            ),
+            mock.call(),
+            mock.call("\033[?25h", end=""),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
 
     def test__print_errors(self):
         """Test the _print_errors function.
@@ -280,17 +426,23 @@ class TestProcessing(unittest.TestCase):
         """
         # Test making a mutable file immutable, then return it to its original
         # state.
-        processing._process_object(constants.MUTABLE_FILE_PATH, immutable=True)
+        processing._process_object(
+            constants.MUTABLE_FILE_PATH,
+            immutable=True,
+            dry_run=False,
+        )
         self.assertTrue(helpers.file_is_immutable(constants.MUTABLE_FILE_PATH))
         processing._process_object(
             constants.MUTABLE_FILE_PATH,
             immutable=False,
+            dry_run=False,
         )
 
         # Test making a mutable file mutable.
         processing._process_object(
             constants.MUTABLE_FILE_PATH,
             immutable=False,
+            dry_run=False,
         )
         self.assertFalse(
             helpers.file_is_immutable(constants.MUTABLE_FILE_PATH),
@@ -301,6 +453,7 @@ class TestProcessing(unittest.TestCase):
         processing._process_object(
             constants.IMMUTABLE_FILE_PATH,
             immutable=False,
+            dry_run=False,
         )
         self.assertFalse(
             helpers.file_is_immutable(constants.IMMUTABLE_FILE_PATH),
@@ -308,12 +461,24 @@ class TestProcessing(unittest.TestCase):
         processing._process_object(
             constants.IMMUTABLE_FILE_PATH,
             immutable=True,
+            dry_run=False,
         )
 
         # Test making an immutable file immutable.
         processing._process_object(
             constants.IMMUTABLE_FILE_PATH,
             immutable=True,
+            dry_run=False,
+        )
+        self.assertTrue(
+            helpers.file_is_immutable(constants.IMMUTABLE_FILE_PATH),
+        )
+
+        # Test making an immutable file mutable as a dry run.
+        processing._process_object(
+            constants.IMMUTABLE_FILE_PATH,
+            immutable=False,
+            dry_run=True,
         )
         self.assertTrue(
             helpers.file_is_immutable(constants.IMMUTABLE_FILE_PATH),
@@ -321,13 +486,18 @@ class TestProcessing(unittest.TestCase):
 
         # Test making a link immutable.
         with self.assertRaises(AssertionError):
-            processing._process_object(constants.LINK_PATH, immutable=True)
+            processing._process_object(
+                constants.LINK_PATH,
+                immutable=True,
+                dry_run=False,
+            )
 
         # Test making a directory mutable.
         with self.assertRaises(AssertionError):
             processing._process_object(
                 constants.DIRECTORY_PATH,
                 immutable=False,
+                dry_run=False,
             )
 
         # Test making a non-existent path mutable.
@@ -335,6 +505,7 @@ class TestProcessing(unittest.TestCase):
             processing._process_object(
                 constants.NON_EXISTENT_PATH,
                 immutable=False,
+                dry_run=False,
             )
 
     def test__set_attribute(self):
@@ -354,7 +525,7 @@ class TestProcessing(unittest.TestCase):
         )
 
         # Test making a non-existent path to immutable.
-        with self.assertRaises(exceptions.ProcessingError):
+        with self.assertRaises(exceptions.SetAttributeError):
             processing._set_attribute("+i", constants.NON_EXISTENT_PATH)
 
     def tearDown(self):

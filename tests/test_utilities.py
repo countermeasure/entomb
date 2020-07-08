@@ -41,7 +41,7 @@ class TestUtilities(unittest.TestCase):
                 include_git=False,
                 print_frequency=1,
             )
-            expected_count = 6
+            expected_count = 8
             self.assertEqual(actual_count, expected_count)
 
         expected_output = [
@@ -52,6 +52,8 @@ class TestUtilities(unittest.TestCase):
             mock.call("Counting file paths: 4", end="\r"),
             mock.call("Counting file paths: 5", end="\r"),
             mock.call("Counting file paths: 6", end="\r"),
+            mock.call("Counting file paths: 7", end="\r"),
+            mock.call("Counting file paths: 8", end="\r"),
             mock.call("\033[K", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected_output)
@@ -63,7 +65,7 @@ class TestUtilities(unittest.TestCase):
                 include_git=True,
                 print_frequency=2,
             )
-            expected_count = 8
+            expected_count = 10
             self.assertEqual(actual_count, expected_count)
 
         expected_output = [
@@ -72,6 +74,7 @@ class TestUtilities(unittest.TestCase):
             mock.call("Counting file paths: 4", end="\r"),
             mock.call("Counting file paths: 6", end="\r"),
             mock.call("Counting file paths: 8", end="\r"),
+            mock.call("Counting file paths: 10", end="\r"),
             mock.call("\033[K", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected_output)
@@ -122,6 +125,14 @@ class TestUtilities(unittest.TestCase):
         with self.assertRaises(AssertionError):
             utilities.file_is_immutable(constants.NON_PATH_STRING)
 
+        # Test a named pipe.
+        with self.assertRaises(exceptions.GetAttributeError):
+            utilities.file_is_immutable(constants.NAMED_PIPE_PATH)
+
+        # Test a file which is readable only by root.
+        with self.assertRaises(exceptions.GetAttributeError):
+            utilities.file_is_immutable(constants.READABLE_BY_ROOT_FILE_PATH)
+
     def test_file_paths(self):
         """Test the file_paths function.
 
@@ -135,6 +146,8 @@ class TestUtilities(unittest.TestCase):
             constants.IMMUTABLE_FILE_PATH,
             constants.LINK_PATH,
             constants.MUTABLE_FILE_PATH,
+            constants.NAMED_PIPE_PATH,
+            constants.READABLE_BY_ROOT_FILE_PATH,
             constants.SUBDIRECTORY_IMMUTABLE_FILE_PATH,
             constants.SUBDIRECTORY_LINK_PATH,
             constants.SUBDIRECTORY_MUTABLE_FILE_PATH,
@@ -152,6 +165,8 @@ class TestUtilities(unittest.TestCase):
             constants.IMMUTABLE_FILE_PATH,
             constants.LINK_PATH,
             constants.MUTABLE_FILE_PATH,
+            constants.NAMED_PIPE_PATH,
+            constants.READABLE_BY_ROOT_FILE_PATH,
             constants.SUBDIRECTORY_IMMUTABLE_FILE_PATH,
             constants.SUBDIRECTORY_LINK_PATH,
             constants.SUBDIRECTORY_MUTABLE_FILE_PATH,
@@ -179,6 +194,22 @@ class TestUtilities(unittest.TestCase):
             )
             # Ths exception will only be raised once the generator is iterated.
             next(paths)
+
+        # Test a named pipe.
+        actual = utilities.file_paths(
+            constants.NAMED_PIPE_PATH,
+            include_git=False,
+        )
+        expected = [constants.NAMED_PIPE_PATH]
+        self.assertEqual(sorted(actual), sorted(expected))
+
+        # Test a file which is readable only by root.
+        actual = utilities.file_paths(
+            constants.READABLE_BY_ROOT_FILE_PATH,
+            include_git=True,
+        )
+        expected = [constants.READABLE_BY_ROOT_FILE_PATH]
+        self.assertEqual(sorted(actual), sorted(expected))
 
     def test_hide_cursor(self):
         """Test the hide_cursor function.
@@ -384,7 +415,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(actual, expected)
 
         # Test a link.
-        with self.assertRaises(exceptions.ProcessingError):
+        with self.assertRaises(exceptions.GetAttributeError):
             actual = utilities._get_immutable_flag(constants.LINK_PATH)
 
     def test__readable_duration(self):

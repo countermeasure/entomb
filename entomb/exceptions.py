@@ -1,2 +1,6 @@
-class ProcessingError(Exception):
-    """Raise when a subprocess call exits with a non-zero status."""
+class GetAttributeError(Exception):
+    """Raise when the immutable attribute cannot be accessed."""
+
+
+class SetAttributeError(Exception):
+    """Raise when the immutable attribute cannot be set."""

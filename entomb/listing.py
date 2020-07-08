@@ -1,7 +1,10 @@
 import datetime
 import os
 
-from entomb import utilities
+from entomb import (
+    exceptions,
+    utilities,
+)
 
 
 @utilities.hide_cursor()
@@ -95,6 +98,9 @@ def _print_the_path(path, immutable):
     is immutable, or if the immutable parameter is False and the file is
     mutable.
 
+    The path should not be printed if the immutability attribute can't be
+    accessed.
+
     Parameters
     ----------
     path : str
@@ -111,16 +117,17 @@ def _print_the_path(path, immutable):
     ------
     AssertionError
         If the path is a directory, is a link or does not exist.
-    ProcessingError
-        If the path's immutable attribute cannot be accessed.
 
     """
     # Parameter check.
     assert not os.path.isdir(path)
     assert not os.path.islink(path)
     assert os.path.exists(path)
+    try:
+        is_immutable = utilities.file_is_immutable(path)
+    except exceptions.GetAttributeError:
+        return False
 
-    is_immutable = utilities.file_is_immutable(path)
     print_immutable_file_path = is_immutable and immutable
     print_mutable_file_path = not is_immutable and not immutable
 

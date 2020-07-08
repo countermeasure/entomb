@@ -77,7 +77,7 @@ def file_is_immutable(path):
     ------
     AssertionError
         If the path is a directory, is a link or does not exist.
-    ProcessingError
+    GetAttributeError
         If the path's immutable attribute cannot be accessed.
 
     """
@@ -118,8 +118,8 @@ def file_paths(path, include_git):
     # when the generator is iterated, not when it is created.
     assert os.path.exists(path)
 
-    # Yield the path if the path is to a file or link.
-    if os.path.isfile(path):
+    # Yield the path if the path is not to a directory.
+    if not os.path.isdir(path):
         yield path
 
     # Walk the path if the path is to a directory.
@@ -326,7 +326,7 @@ def _get_immutable_flag(path):
 
     Raises
     ------
-    ProcessingError
+    GetAttributeError
         If the exit status of the lsattr command is non-zero.
 
     """
@@ -339,8 +339,8 @@ def _get_immutable_flag(path):
             universal_newlines=True,
         )
     except subprocess.CalledProcessError:
-        msg = "'lsattr' failed for '{}'".format(path)
-        raise exceptions.ProcessingError(msg)
+        msg = "Immutable attribute could not be accessed for {}".format(path)
+        raise exceptions.GetAttributeError(msg)
 
     # Extract the immutable attribute from the command output.
     attributes = lsattr_result.stdout.split()[0]

@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 import subprocess
@@ -28,6 +29,7 @@ def file_is_immutable(path):
     lsattr_result = subprocess.run(
         ["lsattr", path],
         check=True,
+        stderr=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         universal_newlines=True,
     )
@@ -61,7 +63,11 @@ def set_file_immutable_attribute(path, immutable):
     """
     operation = "+i" if immutable else "-i"
 
-    subprocess.run(["sudo", "chattr", operation, path], check=True)
+    subprocess.run(
+        ["sudo", "chattr", operation, path],
+        check=True,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def set_up():
@@ -87,6 +93,10 @@ def set_up():
     open(constants.MUTABLE_FILE_PATH, "x").close()
     open(constants.SUBDIRECTORY_IMMUTABLE_FILE_PATH, "x").close()
     open(constants.SUBDIRECTORY_MUTABLE_FILE_PATH, "x").close()
+    open(constants.READABLE_BY_ROOT_FILE_PATH, "x").close()
+
+    # Create testing named pipe.
+    os.mkfifo(constants.NAMED_PIPE_PATH)
 
     # Create testing links.
     os.symlink(constants.MUTABLE_FILE_PATH, constants.LINK_PATH)
@@ -102,6 +112,13 @@ def set_up():
         immutable=True,
     )
 
+    # Set ownership and permissions of the file which is readable only by root.
+    os.chmod(constants.READABLE_BY_ROOT_FILE_PATH, 0o400)
+    subprocess.run(
+        ["sudo", "chown", "root:root", constants.READABLE_BY_ROOT_FILE_PATH],
+        check=True,
+    )
+
 
 def tear_down():
     """Delete temporary directories and files.
@@ -115,7 +132,7 @@ def tear_down():
     for root_dir, _, filenames in os.walk(constants.DIRECTORY_PATH):
         for filename in filenames:
             file_path = os.path.join(root_dir, filename)
-            if not os.path.islink(file_path):
+            with contextlib.suppress(subprocess.CalledProcessError):
                 set_file_immutable_attribute(file_path, immutable=False)
 
     # Remove the testing directory.

@@ -74,6 +74,42 @@ class TestReporting(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+        # Test a named pipe.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting.produce_report(
+                constants.NAMED_PIPE_PATH,
+                include_git=False,
+            )
+        expected = [
+            mock.call("\033[?25l", end=""),
+            mock.call("Produce report"),
+            mock.call(),
+            mock.call("Report"),
+            mock.call("------"),
+            mock.call("Immutable attribute could not be accessed"),
+            mock.call(),
+            mock.call("\033[?25h", end=""),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a file which is readable only by root.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting.produce_report(
+                constants.READABLE_BY_ROOT_FILE_PATH,
+                include_git=True,
+            )
+        expected = [
+            mock.call("\033[?25l", end=""),
+            mock.call("Produce report"),
+            mock.call(),
+            mock.call("Report"),
+            mock.call("------"),
+            mock.call("Immutable attribute could not be accessed"),
+            mock.call(),
+            mock.call("\033[?25h", end=""),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
         # Test a directory including git.
         with mock.patch("builtins.print") as mocked_print:
             reporting.produce_report(
@@ -106,9 +142,11 @@ class TestReporting(unittest.TestCase):
             mock.call("----------------------------------------"),
             mock.call("Mutable files", "                         4"),
             mock.call("----------------------------------------"),
-            mock.call("All files", "                             6"),
+            mock.call("Inaccessible files", "                    2"),
             mock.call("----------------------------------------"),
-            mock.call("Entombed", "                            33%"),
+            mock.call("All files", "                             8"),
+            mock.call("----------------------------------------"),
+            mock.call("Entombed", "                            25%"),
             mock.call("----------------------------------------"),
             mock.call("Links", "                                 2"),
             mock.call("----------------------------------------"),
@@ -151,9 +189,11 @@ class TestReporting(unittest.TestCase):
             mock.call("----------------------------------------"),
             mock.call("Mutable files", "                         2"),
             mock.call("----------------------------------------"),
-            mock.call("All files", "                             4"),
+            mock.call("Inaccessible files", "                    2"),
             mock.call("----------------------------------------"),
-            mock.call("Entombed", "                            50%"),
+            mock.call("All files", "                             6"),
+            mock.call("----------------------------------------"),
+            mock.call("Entombed", "                            33%"),
             mock.call("----------------------------------------"),
             mock.call("Links", "                                 2"),
             mock.call("----------------------------------------"),
@@ -211,13 +251,13 @@ class TestReporting(unittest.TestCase):
                 include_git=False,
             )
 
-    def test__print_file_or_link_report(self):
-        """Test the _print_file_or_link_report function.
+    def test__print_abbreviated_report(self):
+        """Test the _print_abbreviated_report function.
 
         """
         # Test an immutable file.
         with mock.patch("builtins.print") as mocked_print:
-            reporting._print_file_or_link_report(constants.IMMUTABLE_FILE_PATH)
+            reporting._print_abbreviated_report(constants.IMMUTABLE_FILE_PATH)
         expected = [
             mock.call("Report"),
             mock.call("------"),
@@ -228,7 +268,7 @@ class TestReporting(unittest.TestCase):
 
         # Test a mutable file.
         with mock.patch("builtins.print") as mocked_print:
-            reporting._print_file_or_link_report(constants.MUTABLE_FILE_PATH)
+            reporting._print_abbreviated_report(constants.MUTABLE_FILE_PATH)
         expected = [
             mock.call("Report"),
             mock.call("------"),
@@ -239,7 +279,7 @@ class TestReporting(unittest.TestCase):
 
         # Test a link.
         with mock.patch("builtins.print") as mocked_print:
-            reporting._print_file_or_link_report(constants.LINK_PATH)
+            reporting._print_abbreviated_report(constants.LINK_PATH)
         expected = [
             mock.call("Report"),
             mock.call("------"),
@@ -250,11 +290,35 @@ class TestReporting(unittest.TestCase):
 
         # Test a directory.
         with self.assertRaises(AssertionError):
-            reporting._print_file_or_link_report(constants.DIRECTORY_PATH)
+            reporting._print_abbreviated_report(constants.DIRECTORY_PATH)
 
         # Test a non-existent path.
         with self.assertRaises(AssertionError):
-            reporting._print_file_or_link_report(constants.NON_EXISTENT_PATH)
+            reporting._print_abbreviated_report(constants.NON_EXISTENT_PATH)
+
+        # Test a named pipe.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting._print_abbreviated_report(constants.NAMED_PIPE_PATH)
+        expected = [
+            mock.call("Report"),
+            mock.call("------"),
+            mock.call("Immutable attribute could not be accessed"),
+            mock.call(),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a file which is readable only by root.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting._print_abbreviated_report(
+                constants.READABLE_BY_ROOT_FILE_PATH,
+            )
+        expected = [
+            mock.call("Report"),
+            mock.call("------"),
+            mock.call("Immutable attribute could not be accessed"),
+            mock.call(),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
 
     def test__print_full_report(self):
         """Test the _print_full_report function.
@@ -266,6 +330,7 @@ class TestReporting(unittest.TestCase):
                 directory_count=6,
                 link_count=5,
                 immutable_file_count=8,
+                inaccessible_file_count=3,
                 mutable_file_count=27,
             )
         expected = [
@@ -275,9 +340,11 @@ class TestReporting(unittest.TestCase):
             mock.call("----------------------------------------"),
             mock.call("Mutable files", "                        27"),
             mock.call("----------------------------------------"),
-            mock.call("All files", "                            35"),
+            mock.call("Inaccessible files", "                    3"),
             mock.call("----------------------------------------"),
-            mock.call("Entombed", "                            22%"),
+            mock.call("All files", "                            38"),
+            mock.call("----------------------------------------"),
+            mock.call("Entombed", "                            21%"),
             mock.call("----------------------------------------"),
             mock.call("Links", "                                 5"),
             mock.call("----------------------------------------"),
@@ -293,6 +360,7 @@ class TestReporting(unittest.TestCase):
                 directory_count=3,
                 link_count=0,
                 immutable_file_count=0,
+                inaccessible_file_count=0,
                 mutable_file_count=0,
             )
         expected = [

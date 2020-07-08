@@ -38,6 +38,7 @@ def process_objects(path, immutable, include_git, dry_run):
 
     # Set up.
     attribute_changed_count = 0
+    attribute_settable_count = 0
     errors = []
     file_count = 0
     link_count = 0
@@ -65,21 +66,21 @@ def process_objects(path, immutable, include_git, dry_run):
             link_count += 1
 
         else:
-            # Work out if the file's attribute needs to change.
-            is_immutable = utilities.file_is_immutable(file_path)
-            change_attribute = immutable != is_immutable
-
             # Change the file's attribute if necessary.
-            if change_attribute and not dry_run:
-                try:
-                    _process_object(file_path, immutable)
-                except exceptions.ProcessingError as exception:
-                    errors.append(exception)
+            try:
+                attribute_was_changed = _process_object(
+                    file_path,
+                    immutable,
+                    dry_run,
+                )
+                attribute_settable_count += 1
+                if attribute_was_changed:
+                    attribute_changed_count += 1
+            except exceptions.SetAttributeError as error:
+                errors.append(error)
 
             # Count the file.
             file_count += 1
-            if change_attribute:
-                attribute_changed_count += 1
 
         # Update the progress bar.
         utilities.print_progress_bar(
@@ -100,7 +101,10 @@ def process_objects(path, immutable, include_git, dry_run):
     # Print a summary.
     utilities.print_header("Summary")
     if file_count > 0:
-        print("All {} files are now {}".format(file_count, operation))
+        print(
+            "All {} files for which immutability can be set are now {}"
+            .format(attribute_settable_count, operation),
+        )
         print("All {} links were ignored".format(link_count))
     else:
         print("No files were found")
@@ -144,7 +148,7 @@ def _print_errors(errors):
     print()
 
 
-def _process_object(path, immutable):
+def _process_object(path, immutable, dry_run):
     """Set or unset the immutable attribute for a file.
 
     Parameters
@@ -153,16 +157,20 @@ def _process_object(path, immutable):
         The absolute path of a file.
     immutable: bool
         Set immutable attribute if True, unset immutable attribute if False.
+    dry_run : bool
+        Whether to do a dry run which makes no changes.
 
     Returns
     -------
-    None
+    bool
+        Whether the immutable attribute was changed, or if this was a dry run,
+        should have been changed.
 
     Raises
     ------
     AssertionError
         If the path is a directory, is a link or does not exist.
-    ProcessingError
+    SetAttributeError
         If the path's immutable attribute cannot be set.
 
     """
@@ -171,9 +179,22 @@ def _process_object(path, immutable):
     assert not os.path.islink(path)
     assert os.path.exists(path)
 
-    attribute = "+i" if immutable else "-i"
+    try:
+        is_immutable = utilities.file_is_immutable(path)
+    except exceptions.GetAttributeError:
+        msg = "Immutable attribute not settable for {}".format(path)
+        raise exceptions.SetAttributeError(msg)
 
-    _set_attribute(attribute, path)
+    change_attribute = immutable != is_immutable
+
+    if change_attribute and not dry_run:
+        attribute = "+i" if immutable else "-i"
+        _set_attribute(attribute, path)
+
+    # The value of change_attribute is a proxy for whether the immutable
+    # attribute was changed, or if this was a dry run, should have been
+    # changed.
+    return change_attribute
 
 
 def _set_attribute(attribute, path):
@@ -192,7 +213,7 @@ def _set_attribute(attribute, path):
 
     Raises
     ------
-    ProcessingError
+    SetAttributeError
         If the exit status of the chattr command is non-zero.
 
     """
@@ -204,5 +225,5 @@ def _set_attribute(attribute, path):
             stdout=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError:
-        msg = "The 'chattr' command failed for '{}'".format(path)
-        raise exceptions.ProcessingError(msg)
+        msg = "Immutable attribute not settable for {}".format(path)
+        raise exceptions.SetAttributeError(msg)

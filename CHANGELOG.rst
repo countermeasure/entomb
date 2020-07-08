@@ -9,6 +9,7 @@ Unreleased
 Fixed
 ~~~~~
 - Clear progress bar before printing a path when listing files.
+- Stopped crash caused by special files and files with certain permissions.
 
 
 v0.3.0

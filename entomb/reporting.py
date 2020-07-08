@@ -4,6 +4,7 @@ import os
 
 from entomb import (
     constants,
+    exceptions,
     utilities,
 )
 
@@ -35,6 +36,7 @@ def produce_report(path, include_git):
     # Set up.
     directory_count = 0
     immutable_file_count = 0
+    inaccessible_file_count = 0
     link_count = 0
     mutable_file_count = 0
 
@@ -42,9 +44,9 @@ def produce_report(path, include_git):
     print("Produce report")
     print()
 
-    # If the path is a file or link, print an abbreviated report then return.
-    if os.path.isfile(path):
-        _print_file_or_link_report(path)
+    # If the path is not a directory, print an abbreviated report then return.
+    if not os.path.isdir(path):
+        _print_abbreviated_report(path)
         return
 
     # Print the progress header and set up the progress bar.
@@ -73,15 +75,24 @@ def produce_report(path, include_git):
 
             # Count the file.
             else:
-                if utilities.file_is_immutable(file_path):
-                    immutable_file_count += 1
-                else:
-                    mutable_file_count += 1
+                try:
+                    if utilities.file_is_immutable(file_path):
+                        immutable_file_count += 1
+                    else:
+                        mutable_file_count += 1
+                except exceptions.GetAttributeError:
+                    inaccessible_file_count += 1
 
             # Update the progress bar.
+            total_count = (
+                immutable_file_count
+                + inaccessible_file_count
+                + link_count
+                + mutable_file_count
+            )
             utilities.print_progress_bar(
                 start_time,
-                (immutable_file_count + mutable_file_count + link_count),
+                total_count,
                 total_file_paths,
             )
 
@@ -92,15 +103,13 @@ def produce_report(path, include_git):
         directory_count,
         link_count,
         immutable_file_count,
+        inaccessible_file_count,
         mutable_file_count,
     )
 
 
-def _print_file_or_link_report(path):
-    """Print a report for a path which is a file or a link.
-
-    This function assumes that the path has already been confirmed to reference
-    a file or link.
+def _print_abbreviated_report(path):
+    """Print a report for a path which is not a directory.
 
     Parameters
     ----------
@@ -114,11 +123,11 @@ def _print_file_or_link_report(path):
     Raises
     ------
     AssertionError
-        If the path is not a file, is not a link or does not exist.
+        If the path is a directory or does not exist.
 
     """
     # Parameter check.
-    assert os.path.isfile(path)
+    assert not os.path.isdir(path)
     assert os.path.exists(path)
 
     utilities.print_header("Report")
@@ -126,16 +135,19 @@ def _print_file_or_link_report(path):
     if os.path.islink(path):
         print("A link has no immutable attribute")
     else:
-        if utilities.file_is_immutable(path):
-            print("File is immutable")
-        else:
-            print("File is mutable")
+        try:
+            if utilities.file_is_immutable(path):
+                print("File is immutable")
+            else:
+                print("File is mutable")
+        except exceptions.GetAttributeError:
+            print("Immutable attribute could not be accessed")
 
     print()
 
 
 def _print_full_report(directory_count, link_count, immutable_file_count,
-                       mutable_file_count):
+                       inaccessible_file_count, mutable_file_count):
     """Print a report for a path which is a file or a link.
 
     Parameters
@@ -146,6 +158,9 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
         The number of links counted.
     immutable_file_count : int
         The number of immutable files counted.
+    inaccessible_file_count : int
+        The number of files for which the immutability attribute could not be
+        accessed.
     mutable_file_count : int
         The number of mutable files counted.
 
@@ -156,7 +171,11 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
     """
     # Do calculations.
     subdirectory_count = directory_count - 1
-    total_file_count = immutable_file_count + mutable_file_count
+    total_file_count = (
+        immutable_file_count
+        + inaccessible_file_count
+        + mutable_file_count
+    )
 
     try:
         entombed_proportion = immutable_file_count / total_file_count
@@ -179,6 +198,13 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
         "{:,}".format(mutable_file_count).rjust(constants.TABLE_WIDTH - 14),
     )
     print(report_separator)
+    if inaccessible_file_count:
+        print(
+            "Inaccessible files",
+            "{:,}".format(inaccessible_file_count).
+            rjust(constants.TABLE_WIDTH - 19),
+        )
+        print(report_separator)
     print(
         "All files",
         "{:,}".format(total_file_count).rjust(constants.TABLE_WIDTH - 10),

@@ -6,6 +6,11 @@ DIRECTORY_PATH = "/tmp/entomb_testing"
 IMMUTABLE_FILE_PATH = os.path.join(DIRECTORY_PATH, "immutable.txt")
 LINK_PATH = os.path.join(DIRECTORY_PATH, "link.txt")
 MUTABLE_FILE_PATH = os.path.join(DIRECTORY_PATH, "mutable.txt")
+NAMED_PIPE_PATH = os.path.join(DIRECTORY_PATH, "fifo")
+READABLE_BY_ROOT_FILE_PATH = os.path.join(
+    DIRECTORY_PATH,
+    "readable_by_root.txt",
+)
 
 
 # Subdirectory paths.

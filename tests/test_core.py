@@ -101,9 +101,11 @@ class TestCore(unittest.TestCase):
             mock.call("----------------------------------------"),
             mock.call("Mutable files", "                         2"),
             mock.call("----------------------------------------"),
-            mock.call("All files", "                             4"),
+            mock.call("Inaccessible files", "                    2"),
             mock.call("----------------------------------------"),
-            mock.call("Entombed", "                            50%"),
+            mock.call("All files", "                             6"),
+            mock.call("----------------------------------------"),
+            mock.call("Entombed", "                            33%"),
             mock.call("----------------------------------------"),
             mock.call("Links", "                                 2"),
             mock.call("----------------------------------------"),
@@ -204,43 +206,53 @@ class TestCore(unittest.TestCase):
             ),
             mock.call("\033[K", end=""),
             mock.call(
-                "█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  12.5%",
+                "████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  10.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
             mock.call(
-                "██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  25.0%",
+                "████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  20.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
-                "███████████████░░░░░░░░░░░░░░░░░░░░░░░░░  37.5%",
+                "████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░  30.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
-            mock.call("/tmp/entomb_testing/.git/mutable.txt"),
+            mock.call(
+                "████████████████░░░░░░░░░░░░░░░░░░░░░░░░  40.0%",
+                end="\r",
+            ),
             mock.call("\033[K", end=""),
             mock.call(
                 "████████████████████░░░░░░░░░░░░░░░░░░░░  50.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
+            mock.call("/tmp/entomb_testing/.git/mutable.txt"),
+            mock.call("\033[K", end=""),
+            mock.call(
+                "████████████████████████░░░░░░░░░░░░░░░░  60.0%",
+                end="\r",
+            ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/.git/subdirectory/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
-                "█████████████████████████░░░░░░░░░░░░░░░  62.5%",
+                "████████████████████████████░░░░░░░░░░░░  70.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
             mock.call(
-                "██████████████████████████████░░░░░░░░░░  75.0%",
+                "████████████████████████████████░░░░░░░░  80.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
             mock.call(
-                "███████████████████████████████████░░░░░  87.5%",
+                "████████████████████████████████████░░░░  90.0%",
                 end="\r",
             ),
             mock.call("\033[K", end=""),
@@ -254,7 +266,7 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("6 files were examined"),
+            mock.call("8 files were examined"),
             mock.call("4 files are mutable"),
             mock.call(),
             mock.call("\033[?25h", end=""),
@@ -303,8 +315,22 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("All 4 files are now entombed"),
+            mock.call(
+                "All 4 files for which immutability can be set are now "
+                "entombed",
+            ),
             mock.call("All 2 links were ignored"),
+            mock.call(),
+            mock.call("Errors"),
+            mock.call("------"),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/fifo",
+            ),
+            mock.call(
+                ">> Immutable attribute not settable for "
+                "/tmp/entomb_testing/readable_by_root.txt",
+            ),
             mock.call(),
             mock.call("\033[?25h", end=""),
         ]
@@ -350,7 +376,9 @@ class TestCore(unittest.TestCase):
             mock.call(),
             mock.call("Summary"),
             mock.call("-------"),
-            mock.call("All 1 files are now unset"),
+            mock.call(
+                "All 1 files for which immutability can be set are now unset",
+            ),
             mock.call("All 0 links were ignored"),
             mock.call(),
             mock.call("\033[?25h", end=""),
@@ -509,6 +537,16 @@ class TestCore(unittest.TestCase):
         # Test a directory.
         actual = core._get_path_type(constants.DIRECTORY_PATH)
         expected = "directory"
+        self.assertEqual(actual, expected)
+
+        # Test a named pipe.
+        actual = core._get_path_type(constants.NAMED_PIPE_PATH)
+        expected = "path"
+        self.assertEqual(actual, expected)
+
+        # Test a file which is readable only by root
+        actual = core._get_path_type(constants.READABLE_BY_ROOT_FILE_PATH)
+        expected = "file"
         self.assertEqual(actual, expected)
 
         # Test a relative path.

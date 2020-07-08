@@ -271,6 +271,9 @@ def _get_path_type(path):
         path_type = constants.FILE
     elif os.path.isdir(path):
         path_type = constants.DIRECTORY
+    else:
+        # For all others, use a generic term.
+        path_type = "path"
 
     return path_type
 
