@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ----------
 
+Fixed
+~~~~~
+- Clear progress bar before printing a path when listing files.
+
 
 v0.3.0
 ------

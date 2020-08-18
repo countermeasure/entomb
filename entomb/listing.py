@@ -52,6 +52,7 @@ def list_files(path, immutable, include_git):
         else:
             if _print_the_path(file_path, immutable):
                 printed_file_count += 1
+                utilities.clear_line()
                 print(file_path)
 
             file_count += 1

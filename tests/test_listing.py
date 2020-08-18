@@ -44,6 +44,7 @@ class TestListing(unittest.TestCase):
                 "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/immutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -60,6 +61,7 @@ class TestListing(unittest.TestCase):
                 "████████████████████░░░░░░░░░░░░░░░░░░░░  50.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/subdirectory/immutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -107,6 +109,7 @@ class TestListing(unittest.TestCase):
                 "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/immutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -133,6 +136,7 @@ class TestListing(unittest.TestCase):
                 "█████████████████████████░░░░░░░░░░░░░░░  62.5%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/subdirectory/immutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -190,6 +194,7 @@ class TestListing(unittest.TestCase):
                 "█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░  33.3%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -206,6 +211,7 @@ class TestListing(unittest.TestCase):
                 "█████████████████████████████████░░░░░░░  83.3%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/subdirectory/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -253,18 +259,21 @@ class TestListing(unittest.TestCase):
                 "██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  25.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
                 "███████████████░░░░░░░░░░░░░░░░░░░░░░░░░  37.5%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/.git/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
                 "████████████████████░░░░░░░░░░░░░░░░░░░░  50.0%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/.git/subdirectory/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
@@ -281,6 +290,7 @@ class TestListing(unittest.TestCase):
                 "███████████████████████████████████░░░░░  87.5%",
                 end="\r",
             ),
+            mock.call("\033[K", end=""),
             mock.call("/tmp/entomb_testing/subdirectory/mutable.txt"),
             mock.call("\033[K", end=""),
             mock.call(
