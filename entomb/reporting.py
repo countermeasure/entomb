@@ -23,7 +23,15 @@ def produce_report(path, include_git):
     -------
     None
 
+    Raises
+    ------
+    AssertionError
+        If the path does not exist.
+
     """
+    # Parameter check.
+    assert os.path.exists(path)
+
     # Set up.
     directory_count = 0
     immutable_file_count = 0
@@ -103,7 +111,16 @@ def _print_file_or_link_report(path):
     -------
     None
 
+    Raises
+    ------
+    AssertionError
+        If the path is not a file, is not a link or does not exist.
+
     """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert os.path.exists(path)
+
     utilities.print_header("Report")
 
     if os.path.islink(path):

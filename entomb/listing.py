@@ -21,7 +21,15 @@ def list_files(path, immutable, include_git):
     -------
     None
 
+    Raises
+    ------
+    AssertionError
+        If the path does not exist.
+
     """
+    # Parameter check.
+    assert os.path.exists(path)
+
     # Set up.
     file_count = 0
     link_count = 0
@@ -101,10 +109,17 @@ def _print_the_path(path, immutable):
 
     Raises
     ------
+    AssertionError
+        If the path is a directory, is a link or does not exist.
     ProcessingError
-        If the path is a link or directory.
+        If the path's immutable attribute cannot be accessed.
 
     """
+    # Parameter check.
+    assert not os.path.isdir(path)
+    assert not os.path.islink(path)
+    assert os.path.exists(path)
+
     is_immutable = utilities.file_is_immutable(path)
     print_immutable_file_path = is_immutable and immutable
     print_mutable_file_path = not is_immutable and not immutable

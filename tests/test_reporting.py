@@ -204,6 +204,13 @@ class TestReporting(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+        # Test a non-existent path.
+        with self.assertRaises(AssertionError):
+            reporting.produce_report(
+                constants.NON_EXISTENT_PATH,
+                include_git=False,
+            )
+
     def test__print_file_or_link_report(self):
         """Test the _print_file_or_link_report function.
 
@@ -240,6 +247,14 @@ class TestReporting(unittest.TestCase):
             mock.call(),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a directory.
+        with self.assertRaises(AssertionError):
+            reporting._print_file_or_link_report(constants.DIRECTORY_PATH)
+
+        # Test a non-existent path.
+        with self.assertRaises(AssertionError):
+            reporting._print_file_or_link_report(constants.NON_EXISTENT_PATH)
 
     def test__print_full_report(self):
         """Test the _print_full_report function.

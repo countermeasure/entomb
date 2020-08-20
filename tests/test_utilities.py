@@ -107,19 +107,19 @@ class TestUtilities(unittest.TestCase):
         )
 
         # Test a directory path.
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             utilities.file_is_immutable(constants.DIRECTORY_PATH)
 
         # Test a link path.
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             utilities.file_is_immutable(constants.LINK_PATH)
 
         # Test a path which does not exist.
-        with self.assertRaises(exceptions.PathDoesNotExistError):
+        with self.assertRaises(AssertionError):
             utilities.file_is_immutable(constants.NON_EXISTENT_PATH)
 
         # Test a string which can't be parsed as a path.
-        with self.assertRaises(exceptions.PathDoesNotExistError):
+        with self.assertRaises(AssertionError):
             utilities.file_is_immutable(constants.NON_PATH_STRING)
 
     def test_file_paths(self):
@@ -172,7 +172,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(sorted(actual), sorted(expected))
 
         # Test a directory which does not exist.
-        with self.assertRaises(exceptions.PathDoesNotExistError):
+        with self.assertRaises(AssertionError):
             paths = utilities.file_paths(
                 constants.NON_PATH_STRING,
                 include_git=True,

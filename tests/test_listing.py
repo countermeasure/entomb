@@ -1,7 +1,6 @@
 import unittest
 import unittest.mock as mock
 
-import entomb.exceptions as exceptions
 import entomb.listing as listing
 from tests import (
     constants,
@@ -382,6 +381,14 @@ class TestListing(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+        # Test for a non-existent path.
+        with self.assertRaises(AssertionError):
+            listing.list_files(
+                constants.NON_EXISTENT_PATH,
+                immutable=False,
+                include_git=False,
+            )
+
     def test__print_the_path(self):
         """Test the _print_the_path function.
 
@@ -410,9 +417,14 @@ class TestListing(unittest.TestCase):
                 immutable=False,
             ),
         )
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
+            listing._print_the_path(
+                constants.NON_EXISTENT_PATH,
+                immutable=True,
+            )
+        with self.assertRaises(AssertionError):
             listing._print_the_path(constants.DIRECTORY_PATH, immutable=False)
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             listing._print_the_path(constants.LINK_PATH, immutable=True)
 
     def tearDown(self):

@@ -27,7 +27,15 @@ def process_objects(path, immutable, include_git, dry_run):
     -------
     None
 
+    Raises
+    ------
+    AssertionError
+        If the path does not exist.
+
     """
+    # Parameter check.
+    assert os.path.exists(path)
+
     # Set up.
     attribute_changed_count = 0
     errors = []
@@ -65,8 +73,6 @@ def process_objects(path, immutable, include_git, dry_run):
             if change_attribute and not dry_run:
                 try:
                     _process_object(file_path, immutable)
-                except exceptions.ObjectTypeError as exception:
-                    errors.append(exception)
                 except exceptions.ProcessingError as exception:
                     errors.append(exception)
 
@@ -154,28 +160,16 @@ def _process_object(path, immutable):
 
     Raises
     ------
-    PathDoesNotExistError
-        If the path does not exist.
+    AssertionError
+        If the path is a directory, is a link or does not exist.
     ProcessingError
-        If the exit status of the chattr command is non-zero.
-    ObjectTypeError
-        If the path's object is not a file.
+        If the path's immutable attribute cannot be set.
 
     """
-    # Raise an exception if the path does not exist.
-    if not os.path.exists(path):
-        msg = "The path '{}' does not exist".format(path)
-        raise exceptions.PathDoesNotExistError(msg)
-
-    # Raise an exception if called with a path to a link.
-    if os.path.islink(path):
-        msg = "'{}' is a link, but a file is required".format(path)
-        raise exceptions.ObjectTypeError(msg)
-
-    # Raise an exception if called with a path to a directory.
-    if os.path.isdir(path):
-        msg = "'{}' is a directory, but a file is required".format(path)
-        raise exceptions.ObjectTypeError(msg)
+    # Parameter check.
+    assert not os.path.isdir(path)
+    assert not os.path.islink(path)
+    assert os.path.exists(path)
 
     attribute = "+i" if immutable else "-i"
 

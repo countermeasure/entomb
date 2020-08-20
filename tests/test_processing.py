@@ -204,6 +204,15 @@ class TestProcessing(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+        # Test processing a non-existent path.
+        with self.assertRaises(AssertionError):
+            processing.process_objects(
+                constants.NON_EXISTENT_PATH,
+                immutable=True,
+                include_git=True,
+                dry_run=False,
+            )
+
     def test__print_errors(self):
         """Test the _print_errors function.
 
@@ -311,18 +320,18 @@ class TestProcessing(unittest.TestCase):
         )
 
         # Test making a link immutable.
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             processing._process_object(constants.LINK_PATH, immutable=True)
 
         # Test making a directory mutable.
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             processing._process_object(
                 constants.DIRECTORY_PATH,
                 immutable=False,
             )
 
         # Test making a non-existent path mutable.
-        with self.assertRaises(exceptions.PathDoesNotExistError):
+        with self.assertRaises(AssertionError):
             processing._process_object(
                 constants.NON_EXISTENT_PATH,
                 immutable=False,

@@ -7,7 +7,6 @@ import unittest
 import unittest.mock as mock
 
 import entomb.core as core
-import entomb.exceptions as exceptions
 from tests import (
     constants,
     helpers,
@@ -513,11 +512,11 @@ class TestCore(unittest.TestCase):
         self.assertEqual(actual, expected)
 
         # Test a relative path.
-        with self.assertRaises(exceptions.ObjectTypeError):
+        with self.assertRaises(AssertionError):
             core._get_path_type(constants.RELATIVE_PATH)
 
         # Test a path which doesn't exist.
-        with self.assertRaises(exceptions.PathDoesNotExistError):
+        with self.assertRaises(AssertionError):
             core._get_path_type(constants.NON_EXISTENT_PATH)
 
     def test__parse_args(self):

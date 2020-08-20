@@ -41,13 +41,6 @@ def count_file_paths(path, include_git, print_frequency=1000):
     int
         The number of file paths in the directory and its subdirectories.
 
-    Raises
-    ------
-    ObjectTypeError
-        If the path's object is not a directory.
-    PathDoesNotExistError
-        If the path does not exist.
-
     """
     print("Counting file paths: 0", end="\r")
 
@@ -82,29 +75,16 @@ def file_is_immutable(path):
 
     Raises
     ------
-    ObjectTypeError
-        If the path's object is not a file.
-    PathDoesNotExistError
-        If the path does not exist.
+    AssertionError
+        If the path is a directory, is a link or does not exist.
     ProcessingError
-        If the exit status of the lsattr command is non-zero.
+        If the path's immutable attribute cannot be accessed.
 
     """
-    # Raise an exception if the path does not exist.
-    if not os.path.exists(path):
-        msg = "'lsattr' received '{}' which is not a path".format(path)
-        raise exceptions.PathDoesNotExistError(msg)
-
-    # Raise an exception if the path is to a link.
-    if os.path.islink(path):
-        msg = "'lsattr' requires a file, but '{}' is a link".format(path)
-        raise exceptions.ObjectTypeError(msg)
-
-    # Raise an exception if the path is to a directory.
-    if os.path.isdir(path):
-        msg_template = "'lsattr' requires a file, but '{}' is a directory"
-        msg = msg_template.format(path)
-        raise exceptions.ObjectTypeError(msg)
+    # Parameter check.
+    assert not os.path.isdir(path)
+    assert not os.path.islink(path)
+    assert os.path.exists(path)
 
     # Get the immutable flag.
     immutable_flag = _get_immutable_flag(path)
@@ -129,16 +109,14 @@ def file_paths(path, include_git):
 
     Raises
     ------
-    PathDoesNotExistError
+    AssertionError
         If the path does not exist.
 
     """
-    # Raise an exception if the path does not exist. Note that this exception
-    # appears to only be raised when the generator is iterated, not when it is
-    # created.
-    if not os.path.exists(path):
-        msg = "The path '{}' does not exist".format(path)
-        raise exceptions.PathDoesNotExistError(msg)
+    # Parameter check.
+    # Note that this assert statement appears to only raise an AssertionError
+    # when the generator is iterated, not when it is created.
+    assert os.path.exists(path)
 
     # Yield the path if the path is to a file or link.
     if os.path.isfile(path):

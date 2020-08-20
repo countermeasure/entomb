@@ -8,7 +8,6 @@ import sys
 import entomb
 from entomb import (
     constants,
-    exceptions,
     listing,
     processing,
     reporting,
@@ -258,21 +257,13 @@ def _get_path_type(path):
 
     Raises
     ------
-    ObjectTypeError
-        If the path is not an absolute path.
-    PathDoesNotExistError
-        If the path does not exist.
+    AssertionError
+        If the path does not exist or is not an absolute path.
 
     """
-    # Raise an exception if the path is not an absolute path.
-    if not os.path.isabs(path):
-        msg = "'{}' is not an absolute path".format(path)
-        raise exceptions.ObjectTypeError(msg)
-
-    # Raise an exception if the path does not exist.
-    if not os.path.exists(path):
-        msg = "The path '{}' does not exist".format(path)
-        raise exceptions.PathDoesNotExistError(msg)
+    # Parameter check.
+    assert os.path.exists(path)
+    assert os.path.isabs(path)
 
     if os.path.islink(path):
         path_type = constants.LINK
