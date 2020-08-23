@@ -6,6 +6,11 @@ Changelog
 Unreleased
 ----------
 
+
+v0.3.1
+------
+*23 August 2020*
+
 Fixed
 ~~~~~
 - Clear progress bar before printing a path when listing files.
