@@ -6,6 +6,10 @@ Changelog
 Unreleased
 ----------
 
+Added
+~~~~~
+- Added Python 3.9 support.
+
 
 v0.3.1
 ------
