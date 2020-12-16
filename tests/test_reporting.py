@@ -382,6 +382,46 @@ class TestReporting(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+    def test__print_report_line(self):
+        """Test the _print_report_line function.
+
+        """
+        # Test a label with no value.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting._print_report_line("Report")
+        expected = [
+            mock.call("Report"),
+            mock.call("----------------------------------------"),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test a percentage string.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting._print_report_line("Entombed", "87%")
+        expected = [
+            mock.call("Entombed", "                            87%"),
+            mock.call("----------------------------------------"),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+        # Test an integer string.
+        with mock.patch("builtins.print") as mocked_print:
+            reporting._print_report_line("Mutable files", "1,234,567")
+        expected = [
+            mock.call("Mutable files", "                 1,234,567"),
+            mock.call("----------------------------------------"),
+        ]
+        self.assertEqual(mocked_print.mock_calls, expected)
+
+    def test__stringify_int(self):
+        """Test the _stringify_int function.
+
+        """
+        self.assertEqual(reporting._stringify_int(0), "0")
+        self.assertEqual(reporting._stringify_int(1), "1")
+        self.assertEqual(reporting._stringify_int(1234), "1,234")
+        self.assertEqual(reporting._stringify_int(1234567), "1,234,567")
+
     def tearDown(self):
         """Delete temporary directories and files.
 

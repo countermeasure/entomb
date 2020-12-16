@@ -185,44 +185,56 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
         entombed_percentage = "n/a"
 
     # Print the report.
-    report_separator = "-" * constants.TABLE_WIDTH
-    print("Report")
-    print(report_separator)
-    print(
-        "Immutable files",
-        "{:,}".format(immutable_file_count).rjust(constants.TABLE_WIDTH - 16),
-    )
-    print(report_separator)
-    print(
-        "Mutable files",
-        "{:,}".format(mutable_file_count).rjust(constants.TABLE_WIDTH - 14),
-    )
-    print(report_separator)
+    _print_report_line("Report")
+    _print_report_line("Immutable files", _stringify_int(immutable_file_count))
+    _print_report_line("Mutable files", _stringify_int(mutable_file_count))
     if inaccessible_file_count:
-        print(
+        _print_report_line(
             "Inaccessible files",
-            "{:,}".format(inaccessible_file_count).
-            rjust(constants.TABLE_WIDTH - 19),
+            _stringify_int(inaccessible_file_count),
         )
-        print(report_separator)
-    print(
-        "All files",
-        "{:,}".format(total_file_count).rjust(constants.TABLE_WIDTH - 10),
-    )
-    print(report_separator)
-    print(
-        "Entombed",
-        entombed_percentage.rjust(constants.TABLE_WIDTH - 9),
-    )
-    print(report_separator)
-    print(
-        "Links",
-        "{:,}".format(link_count).rjust(constants.TABLE_WIDTH - 6),
-    )
-    print(report_separator)
-    print(
-        "Sub-directories",
-        "{:,}".format(subdirectory_count).rjust(constants.TABLE_WIDTH - 16),
-    )
-    print(report_separator)
+    _print_report_line("All files", _stringify_int(total_file_count))
+    _print_report_line("Entombed", entombed_percentage)
+    _print_report_line("Links", _stringify_int(link_count))
+    _print_report_line("Sub-directories", _stringify_int(subdirectory_count))
     print()
+
+
+def _print_report_line(label, value=None):
+    """Print a line in the full report followed by a separator line.
+
+    Parameters
+    ----------
+    label : str
+        The label to print on the left.
+    value : str, optional
+        The value, if any, to print on the right.
+
+    Returns
+    -------
+    None
+
+    """
+    if value is None:
+        print(label)
+    else:
+        value_width = constants.TABLE_WIDTH - (len(label) + 1)
+        print(label, value.rjust(value_width))
+    print("-" * constants.TABLE_WIDTH)
+
+
+def _stringify_int(integer):
+    """Convert an integer into a string formatted with thousand separators.
+
+    Parameters
+    ----------
+    integer : int
+        The integer.
+
+    Returns
+    -------
+    str
+        The integer turned into a string.
+
+    """
+    return "{:,}".format(integer)
