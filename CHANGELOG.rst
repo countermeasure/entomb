@@ -10,6 +10,10 @@ Added
 ~~~~~
 - Added Python 3.9 support.
 
+Changed
+~~~~~~~
+- Reordered items in the report and hid items when not relevant.
+
 
 v0.3.1
 ------

@@ -186,17 +186,22 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
 
     # Print the report.
     _print_report_line("Report")
-    _print_report_line("Immutable files", _stringify_int(immutable_file_count))
-    _print_report_line("Mutable files", _stringify_int(mutable_file_count))
+    _print_report_line("Entombed", entombed_percentage)
+    if mutable_file_count:
+        _print_report_line("Mutable files", _stringify_int(mutable_file_count))
     if inaccessible_file_count:
         _print_report_line(
             "Inaccessible files",
             _stringify_int(inaccessible_file_count),
         )
-    _print_report_line("All files", _stringify_int(total_file_count))
-    _print_report_line("Entombed", entombed_percentage)
-    _print_report_line("Links", _stringify_int(link_count))
-    _print_report_line("Sub-directories", _stringify_int(subdirectory_count))
+    _print_report_line("Total files", _stringify_int(total_file_count))
+    if link_count:
+        _print_report_line("Links", _stringify_int(link_count))
+    if subdirectory_count:
+        _print_report_line(
+            "Sub-directories",
+            _stringify_int(subdirectory_count),
+        )
     print()
 
 
