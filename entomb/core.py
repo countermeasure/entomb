@@ -7,6 +7,7 @@ import sys
 
 import entomb
 from entomb import (
+    checking,
     constants,
     listing,
     processing,
@@ -55,6 +56,7 @@ def main(argv):
     # Trigger the sudo prompt if the operation can change immutability
     # attributes and the user does not currently have root priviliges.
     root_privileges_required = not any([
+        args.check,
         args.dry_run,
         args.list_immutable,
         args.list_mutable,
@@ -92,6 +94,11 @@ def main(argv):
     # Print the operation header.
     utilities.print_header("Operation")
 
+    # If a check is requested, do the check then return a zero exit status.
+    if args.check:
+        checking.check_files(absolute_path, include_git=args.include_git)
+        return 0
+
     # If a report is requested, print it then return a zero exit status.
     if args.report:
         reporting.produce_report(absolute_path, include_git=args.include_git)
@@ -116,6 +123,8 @@ def main(argv):
             include_git=args.include_git,
         )
         return 0
+
+    # TODO: If unsetting immutibility, prompt for confirmation first.
 
     # Set the immutable attribute for everything on the path, then return a
     # zero exit status.
@@ -157,7 +166,9 @@ def _check_argument_conflicts(args):
 
     """
     # Match each argument with a list of the arguments compatible with it.
+    # TODO: What can't -c and -g be passed in together?
     compatibility = {
+        constants.CHECK_ARG: [constants.INCLUDE_GIT_ARG],
         constants.DRY_RUN_ARG: [
             constants.INCLUDE_GIT_ARG,
             constants.UNSET_ARG,
@@ -299,6 +310,12 @@ def _parse_args(argv):
 
     parser.add_argument("path", help="the path to operate on")
     parser.add_argument(
+        constants.CHECK_SHORT_ARG,
+        constants.CHECK_ARG,
+        action="store_true",
+        help="check file integrity",
+    )
+    parser.add_argument(
         constants.DRY_RUN_SHORT_ARG,
         constants.DRY_RUN_ARG,
         action="store_true",
@@ -397,6 +414,9 @@ def _prompt_for_sudo():
     print("** To set or unset files' immutable attributes, root")
     print("** privileges are required.")
     print()
+    # TODO: Show a different message when `--check` is being run, explaining
+    # that as part of the checking process hash files need to be written and
+    # made immutable, so that it why root is required.
     subprocess.run(
         ["sudo", "-v"],
         check=True,

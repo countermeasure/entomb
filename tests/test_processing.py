@@ -94,6 +94,8 @@ class TestProcessing(unittest.TestCase):
                         file_should_be_immutable,
                     )
 
+        # TODO: Confirm that all of the data files are present and correct.
+
         # Test making files mutable including git.
         with mock.patch("builtins.print") as mocked_print:
             processing.process_objects(
@@ -155,6 +157,8 @@ class TestProcessing(unittest.TestCase):
                 file_path = os.path.join(root_dir, filename)
                 with contextlib.suppress(subprocess.CalledProcessError):
                     self.assertFalse(helpers.file_is_immutable(file_path))
+
+        # TODO: Confirm that all of the data files are now not present.
 
         # Test a dry-run for making files immutable excluding git.
         with mock.patch("builtins.print") as mocked_print:
@@ -218,6 +222,8 @@ class TestProcessing(unittest.TestCase):
                 with contextlib.suppress(subprocess.CalledProcessError):
                     self.assertFalse(helpers.file_is_immutable(file_path))
 
+        # TODO: Confirm that no data files are present.
+
         # Test processing an empty directory.
         with mock.patch("builtins.print") as mocked_print:
             processing.process_objects(
@@ -248,6 +254,8 @@ class TestProcessing(unittest.TestCase):
             mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
+
+        # TODO: Confirm that no data files are present.
 
         # Test processing a non-existent path.
         with self.assertRaises(AssertionError):
@@ -308,6 +316,8 @@ class TestProcessing(unittest.TestCase):
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
 
+        # TODO: Confirm that no data files are present.
+
         # Test a file which is readable only by root.
         with mock.patch("builtins.print") as mocked_print:
             processing.process_objects(
@@ -358,6 +368,77 @@ class TestProcessing(unittest.TestCase):
             mock.call("\033[?25h", end=""),
         ]
         self.assertEqual(mocked_print.mock_calls, expected)
+
+        # TODO: Confirm that no data files are present.
+
+    def test__create_data_files(self):
+        """Test the _create_data_files function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__delete_data_file(self):
+        """Test the _delete_data_file function.
+
+        """
+        # Test deleting a non-existent path.
+        with self.assertRaises(AssertionError):
+            processing._delete_data_file(constants.NON_EXISTENT_PATH)
+
+        # TODO: Make these tests.
+        # CURRENT WORK
+
+        pass
+
+    def test__delete_data_files(self):
+        """Test the _delete_data_files function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__delete_directory_if_empty(self):
+        """Test the _delete_directory_if_empty function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__delete_empty_directory(self):
+        """Test the _delete_empty_directory function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__get_checksum(self):
+        """Test the _get_checksum function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__get_data_file_paths(self):
+        """Test the _get_data_file_paths function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__is_entomb_directory(self):
+        """Test the _is_entomb_directory function.
+
+        """
+        # TODO: Make these tests.
+        pass
+
+    def test__is_in_entomb_directory(self):
+        """Test the _is_in_entomb_directory function.
+
+        """
+        # TODO: Make these tests.
+        pass
 
     def test__print_errors(self):
         """Test the _print_errors function.

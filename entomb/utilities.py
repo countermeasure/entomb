@@ -129,6 +129,11 @@ def file_paths(path, include_git):
         if not include_git:
             dirnames[:] = [d for d in dirnames if d != ".git"]
 
+        # Exclude Entomb directories and their contents.
+        dirnames[:] = [
+            d for d in dirnames if d != constants.ENTOMB_DIRECTORY_NAME
+        ]
+
         for filename in filenames:
             yield os.path.join(root_dir, filename)
 

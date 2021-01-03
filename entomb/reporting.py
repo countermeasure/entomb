@@ -62,6 +62,11 @@ def produce_report(path, include_git):
         if not include_git:
             dirnames[:] = [d for d in dirnames if d != ".git"]
 
+        # Exclude Entomb directories and their contents.
+        dirnames[:] = [
+            d for d in dirnames if d != constants.ENTOMB_DIRECTORY_NAME
+        ]
+
         # Count the directory.
         directory_count += 1
 

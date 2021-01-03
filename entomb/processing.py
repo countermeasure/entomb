@@ -1,8 +1,13 @@
+import contextlib
 import datetime
+import hashlib
+import json
 import os
+import shutil
 import subprocess
 
 from entomb import (
+    constants,
     exceptions,
     utilities,
 )
@@ -33,6 +38,16 @@ def process_objects(path, immutable, include_git, dry_run):
         If the path does not exist.
 
     """
+    # TODO: Does this want to write a log file to record what it did? Wrap any
+    # log functionality in a decorator so that whatever has been done is
+    # written to file even in the event of a crash.
+    # {"time": thetime, "added": [filenames]}
+    # Append each line to the file as you go. Make the logs human readable, but
+    # also formatted in a way that they're machine parsable and also easly
+    # grepable:
+    # <timestamp> <action> <filepath>
+    # action can be ADDED, CHANGED, REMOVED?
+
     # Parameter check.
     assert os.path.exists(path)
 
@@ -67,6 +82,9 @@ def process_objects(path, immutable, include_git, dry_run):
 
         else:
             # Change the file's attribute if necessary.
+            # TODO: Is this a good place to check if it's already entombed, and
+            # not to do anything if it should be entombed and is already
+            # entombed?
             try:
                 attribute_was_changed = _process_object(
                     file_path,
@@ -87,6 +105,7 @@ def process_objects(path, immutable, include_git, dry_run):
             start_time,
             (file_count + link_count),
             total_file_paths,
+            5,
         )
 
     print()
@@ -112,6 +131,305 @@ def process_objects(path, immutable, include_git, dry_run):
 
     # Print any errors.
     _print_errors(errors)
+
+
+def _create_hash_files(path):
+    """Create multiple redundant hash files for the file path.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of the file to create hash files for.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a file or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    # Ensure the data file directory exists.
+    file_directory, filename = os.path.split(path)
+    hashes_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY_NAME,
+        constants.HASHES_DIRECTORY_NAME,
+        filename,
+    )
+    os.makedirs(hashes_directory_path, exist_ok=True)
+
+    # Check that no hash files already exist.
+    existing_files = os.listdir(hashes_directory_path)
+    if existing_files:
+        raise Exception  # TODO: What sort and with what information?
+
+    # Get data file paths.
+    hash_file_paths = _get_hash_file_paths(path)
+
+    # Create data file contents.
+    hash_file_contents = _build_hash_file_contents(path)
+
+    # Create each hash file.
+    for hash_file_path in hash_file_paths:
+
+        # Create the hash file.
+        with open(hash_file_path, "w") as _file:
+            _file.write(hash_file_contents)
+
+        # Make the hash file read-only and immutable.
+        os.chmod(hash_file_path, 0o444)
+        _set_attribute(constants.IMMUTABLE_ATTRIBUTE, hash_file_path)
+
+
+def _delete_directory_if_empty(path):
+    """Delete an entomb directory or sub-directory if it is empty.
+
+    If the directory is not empty, do nothing.
+
+    Parameters
+    ----------
+    path : str
+        An absolute path which is a directory.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a directory or is not an entomb directory or is not
+        in an entomb directory or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isdir(path)
+    assert _is_entomb_directory(path) or _is_entomb_subdirectory(path)
+
+    # Delete the directory if it is empty.
+    with contextlib.suppress(OSError):
+        os.rmdir(path)
+
+
+def _delete_hashes_directory(path):
+    """Delete all hash files for the file path.
+
+    Directories which deleting the data files leaves empty are deleted as well.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of the file whose data files will be deleted.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a file or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    # Get data directory path.
+    file_directory, filename = os.path.split(path)
+    entomb_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY_NAME,
+    )
+    hashes_directory_path = os.path.join(
+        entomb_directory_path,
+        constants.HASHES_DIRECTORY_NAME,
+    )
+    file_hashes_directory_path = os.path.join(hashes_directory_path, filename)
+
+    # Make all files in data directory mutable.
+    for root_dir, dirnames, filenames in os.walk(file_hashes_directory_path):
+        for filename in filenames:
+            file_path = os.path.join(root_dir, filename)
+            _set_attribute(constants.MUTABLE_ATTRIBUTE, file_path)
+
+    # Delete the hashes directory if it's now empty.
+    shutil.rmtree(file_hashes_directory_path)
+
+    # Delete the .entomb directory if it's now empty.
+    _delete_directory_if_empty(hashes_directory_path)
+
+    # Delete the .entomb directory if it's now empty.
+    _delete_directory_if_empty(entomb_directory_path)
+
+
+def _get_checksum(path):
+    """Get the checksum for the file path, prefixed with the hash type.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of a file.
+
+    Returns
+    -------
+    str
+        The checksum of the file at the path, prefixed with the hash type. For
+        example: "sha512-b24a099...844c3f3"
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a file or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    _hash = hashlib.sha512()
+    chunk_size = 16384
+
+    with open(path, "rb") as _file:
+        for chunk in iter(lambda: _file.read(chunk_size), b""):
+            _hash.update(chunk)
+
+    return "{}-{}".format(_hash.name, _hash.hexdigest())
+
+
+def _build_hash_file_contents(path):
+    """TODO."""
+    # TODO: Should the word 'data' be used everywhere that the word "hashes" is
+    # now? This file stores data now rather than just hashes. And the directory
+    # it exists in contains data not rather than just hashes, so maybe the
+    # directory should be called "data" too. Do a find and replace for all uses
+    # of "hash" in the code?
+    time_format = "%Y-%m-%dT%H:%M:%S%z"
+
+    filename = os.path.basename(path)
+    statinfo = os.stat(path)
+    st_mtime = statinfo.st_mtime
+    raw_mtime = datetime.datetime.fromtimestamp(
+        st_mtime,
+        datetime.timezone.utc,
+    )
+    mtime = raw_mtime.strftime(time_format)
+    st_size = statinfo.st_size
+    checksum = _get_checksum(path)
+    now = datetime.datetime.now(datetime.timezone.utc).strftime(time_format)
+
+    data = {
+        "file": filename,
+        "file_mtime": mtime,
+        "file_size": st_size,
+        "hash": checksum,
+        "hash_time": now,
+    }
+    hash_file_contents = json.dumps(data, indent=4)
+
+    return hash_file_contents
+
+
+def _get_hash_file_paths(path):
+    """Get data file paths for the file path.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of the file to get data file paths for.
+
+    Returns
+    -------
+    list of str
+        The list of data file paths for the file path.
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a file or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    file_directory, filename = os.path.split(path)
+
+    # Build data file names.
+    suffixes = range(1, constants.HASH_FILES_PER_FILE + 1)
+    data_file_names = [
+        "{}.hash.{}".format(filename, suffix) for suffix in suffixes
+    ]
+
+    # Build data directory path.
+    data_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY_NAME,
+        constants.HASHES_DIRECTORY_NAME,
+        filename,
+    )
+
+    return [os.path.join(data_directory_path, fn) for fn in data_file_names]
+
+
+def _is_entomb_directory(path):
+    """Check that a directory is an entomb directory.
+
+    Parameters
+    ----------
+    path : str
+        An absolute path which is a directory.
+
+    Returns
+    -------
+    bool
+        Whether the directory is an entomb directory.
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a directory or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isdir(path)
+
+    return os.path.basename(path) == constants.ENTOMB_DIRECTORY_NAME
+
+
+def _is_entomb_subdirectory(path):
+    """Check that a path an entomb subdirectory.
+
+    Parameters
+    ----------
+    path : str
+        An absolute path which is a directory.
+
+    Returns
+    -------
+    bool
+        Whether the directory is an entomb subdirectory.
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a directory or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isdir(path)
+
+    subdirectory_fragment = "/{}/".format(constants.ENTOMB_DIRECTORY_NAME)
+
+    # The path must contain "/.entomb/".
+    return subdirectory_fragment in path
 
 
 def _print_errors(errors):
@@ -179,17 +497,47 @@ def _process_object(path, immutable, dry_run):
     assert not os.path.islink(path)
     assert os.path.exists(path)
 
+    # Find out if the file is currently immutable.
     try:
         is_immutable = utilities.file_is_immutable(path)
     except exceptions.GetAttributeError as error:
         msg = "Immutable attribute not settable for {}".format(path)
         raise exceptions.SetAttributeError(msg) from error
 
+    # Check that hash files exist and are correct for an immutable file, and
+    # don't exist for a mutable file.
+    hash_file_paths = _get_hash_file_paths(path)
+    if is_immutable:
+        for hash_file_path in hash_file_paths:
+            raw_expected_contents = _build_hash_file_contents(path)
+            expected_contents = json.loads(raw_expected_contents)
+            with open(hash_file_path, "r") as _file:
+                raw_contents = _file.read()
+            contents = json.loads(raw_contents)
+            contents_match = (
+                contents["file"] == expected_contents["file"]
+                and contents["file_mtime"] == expected_contents["file_mtime"]
+                and contents["file_size"] == expected_contents["file_size"]
+                and contents["hash"] == expected_contents["hash"]
+            )
+            if not contents_match:
+                print(contents)
+                print(expected_contents)
+                raise Exception("TODO")  # TODO: What sort / what message?
+    else:
+        hash_file_directory = os.path.dirname(hash_file_paths[0])
+        if os.path.exists(hash_file_directory):
+            raise Exception("TODO")  # TODO: What sort / what message?
+
     change_attribute = immutable != is_immutable
 
     if change_attribute and not dry_run:
-        attribute = "+i" if immutable else "-i"
-        _set_attribute(attribute, path)
+        if immutable:
+            _set_attribute(constants.IMMUTABLE_ATTRIBUTE, path)
+            _create_hash_files(path)
+        else:
+            _set_attribute(constants.MUTABLE_ATTRIBUTE, path)
+            _delete_hashes_directory(path)
 
     # The value of change_attribute is a proxy for whether the immutable
     # attribute was changed, or if this was a dry run, should have been
