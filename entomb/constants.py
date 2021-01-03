@@ -13,6 +13,16 @@ VERSION_ARG = "--version"
 VERSION_SHORT_ARG = "-v"
 
 
+# Dot directories and dot files.
+DATA_FILES_PER_FILE = 3
+ENTOMB_DIRECTORY = ".entomb"
+
+
+# File attributes.
+IMMUTABLE_ATTRIBUTE = "+i"
+MUTABLE_ATTRIBUTE = "-i"
+
+
 # Formatting
 TABLE_WIDTH = 40
 

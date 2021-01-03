@@ -1,8 +1,12 @@
+import contextlib
 import datetime
+import hashlib
+import json
 import os
 import subprocess
 
 from entomb import (
+    constants,
     exceptions,
     utilities,
 )
@@ -114,6 +118,145 @@ def process_objects(path, immutable, include_git, dry_run):
     _print_errors(errors)
 
 
+def _create_data_files(path):
+    """TODO.
+
+    """
+    # TODO: Write tests for this function.
+    # Create data file contents.
+    now = datetime.datetime.now().astimezone()
+    sha512_hash = _get_sha512_hash(path)
+    data = {
+        "hash": "sha512-{}".format(sha512_hash),
+        "timestamp": now.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+
+    data_file_paths = _get_data_file_paths(path)
+
+    for data_file_path in data_file_paths:
+
+        # Ensure the data file directory exists.
+        data_file_directory = os.path.dirname(data_file_path)
+        os.makedirs(data_file_directory, exist_ok=True)
+
+        # Write the data file.
+        with open(data_file_path, "w") as f:
+            f.write(json.dumps(data, indent=4))
+
+        # Make the data file read-only and immutable.
+        os.chmod(data_file_path, 0o444)
+        _set_attribute(constants.IMMUTABLE_ATTRIBUTE, data_file_path)
+
+
+def _delete_data_file(path):
+    """TODO.
+
+    """
+    # TODO: Write tests for this function.
+    # Check that the path contains "/.entomb/" or it's not in an entomb
+    # directory.
+    is_in_entomb_directory = "/{}/".format(constants.ENTOMB_DIRECTORY) in path
+    assert is_in_entomb_directory
+
+    os.remove(path)
+
+
+def _delete_directory_if_empty(directory):
+    """TODO.
+
+    """
+    # TODO: Write tests for this function.
+    # Check that the path contains "/.entomb/" or ends with "/.entomb", or it's
+    # not an entomb directory.
+    is_entomb_directory = any([
+        "/{}/".format(constants.ENTOMB_DIRECTORY) in directory,
+        directory.endswith("/{}".format(constants.ENTOMB_DIRECTORY)),
+    ])
+    assert is_entomb_directory
+
+    # Delete the directory if it is empty.
+    with contextlib.suppress(OSError):
+        os.rmdir(directory)
+
+
+def _get_data_file_paths(path):
+    """TODO.
+
+    """
+    # TODO: Write tests for this function.
+    file_directory, filename = os.path.split(path)
+
+    # Build data file names.
+    suffixes = range(1, constants.DATA_FILES_PER_FILE + 1)
+    data_file_names = [
+        "{}.data.{}".format(filename, suffix) for suffix in suffixes
+    ]
+
+    # Build data file paths.
+    entomb_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY,
+    )
+    data_directory_path = os.path.join(entomb_directory_path, "data", filename)
+    data_file_paths = [
+        os.path.join(data_directory_path, fn) for fn in data_file_names
+    ]
+
+    return data_file_paths
+
+
+def _delete_data_files(path):
+    """TODO.
+
+    """
+    # TODO: Write tests for this function.
+    data_file_paths = _get_data_file_paths(path)
+
+    for data_file_path in data_file_paths:
+
+        # Make the data file mutable so it can be deleted.
+        _set_attribute(constants.MUTABLE_ATTRIBUTE, data_file_path)
+
+        _delete_data_file(data_file_path)
+
+    # Delete the data files directory.
+    data_file_directory = os.path.dirname(data_file_path)
+    _delete_directory_if_empty(data_file_directory)
+
+    # Delete the .entomb/data directory if it's now empty.
+    data_directory = os.path.dirname(data_file_directory)
+    _delete_directory_if_empty(data_directory)
+
+    # Delete the .entomb directory if it's now empty.
+    entomb_directory = os.path.dirname(data_directory)
+    _delete_directory_if_empty(entomb_directory)
+
+
+def _get_sha512_hash(path):
+    """TODO.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of a file.
+
+    Returns
+    -------
+    str
+        The sha512 hash of the file at the path.
+
+    """
+    # TODO: Write tests for this function.
+    sha512 = hashlib.sha512()
+    chunk_size = 16384
+
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            sha512.update(chunk)
+
+    return sha512.hexdigest()
+
+
 def _print_errors(errors):
     """Print the list of errors resulting from file processing.
 
@@ -188,8 +331,12 @@ def _process_object(path, immutable, dry_run):
     change_attribute = immutable != is_immutable
 
     if change_attribute and not dry_run:
-        attribute = "+i" if immutable else "-i"
-        _set_attribute(attribute, path)
+        if immutable:
+            _set_attribute(constants.IMMUTABLE_ATTRIBUTE, path)
+            _create_data_files(path)
+        else:
+            _set_attribute(constants.MUTABLE_ATTRIBUTE, path)
+            _delete_data_files(path)
 
     # The value of change_attribute is a proxy for whether the immutable
     # attribute was changed, or if this was a dry run, should have been
