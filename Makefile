@@ -75,3 +75,5 @@ test:
 	@coverage run -m unittest
 
 .DEFAULT_GOAL:= help
+.PHONY: ci clean coverage help init install lint package publish push release \
+	test
