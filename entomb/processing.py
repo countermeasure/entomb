@@ -181,9 +181,9 @@ def _process_object(path, immutable, dry_run):
 
     try:
         is_immutable = utilities.file_is_immutable(path)
-    except exceptions.GetAttributeError:
+    except exceptions.GetAttributeError as error:
         msg = "Immutable attribute not settable for {}".format(path)
-        raise exceptions.SetAttributeError(msg)
+        raise exceptions.SetAttributeError(msg) from error
 
     change_attribute = immutable != is_immutable
 
@@ -224,6 +224,6 @@ def _set_attribute(attribute, path):
             stderr=subprocess.STDOUT,
             stdout=subprocess.DEVNULL,
         )
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as error:
         msg = "Immutable attribute not settable for {}".format(path)
-        raise exceptions.SetAttributeError(msg)
+        raise exceptions.SetAttributeError(msg) from error

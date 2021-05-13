@@ -338,9 +338,9 @@ def _get_immutable_flag(path):
             stdout=subprocess.PIPE,
             universal_newlines=True,
         )
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as error:
         msg = "Immutable attribute could not be accessed for {}".format(path)
-        raise exceptions.GetAttributeError(msg)
+        raise exceptions.GetAttributeError(msg) from error
 
     # Extract the immutable attribute from the command output.
     attributes = lsattr_result.stdout.split()[0]
