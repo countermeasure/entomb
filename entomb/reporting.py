@@ -99,6 +99,7 @@ def produce_report(path, include_git):
                 start_time,
                 total_count,
                 total_file_paths,
+                100,
             )
 
     print()
@@ -190,61 +191,30 @@ def _print_full_report(directory_count, link_count, immutable_file_count,
         entombed_percentage = "n/a"
 
     # Print the report.
-    _print_report_line("Report")
-    _print_report_line("Entombed", entombed_percentage)
+    utilities.print_report_line("Report")
+    utilities.print_report_line("Entombed", entombed_percentage)
     if mutable_file_count:
-        _print_report_line("Mutable files", _stringify_int(mutable_file_count))
-    if inaccessible_file_count:
-        _print_report_line(
-            "Inaccessible files",
-            _stringify_int(inaccessible_file_count),
+        utilities.print_report_line(
+            "Mutable files",
+            utilities.stringify_int(mutable_file_count),
         )
-    _print_report_line("Total files", _stringify_int(total_file_count))
+    if inaccessible_file_count:
+        utilities.print_report_line(
+            "Inaccessible files",
+            utilities.stringify_int(inaccessible_file_count),
+        )
+    utilities.print_report_line(
+        "Total files",
+        utilities.stringify_int(total_file_count),
+    )
     if link_count:
-        _print_report_line("Links", _stringify_int(link_count))
+        utilities.print_report_line(
+            "Links",
+            utilities.stringify_int(link_count),
+        )
     if subdirectory_count:
-        _print_report_line(
+        utilities.print_report_line(
             "Sub-directories",
-            _stringify_int(subdirectory_count),
+            utilities.stringify_int(subdirectory_count),
         )
     print()
-
-
-def _print_report_line(label, value=None):
-    """Print a line in the full report followed by a separator line.
-
-    Parameters
-    ----------
-    label : str
-        The label to print on the left.
-    value : str, optional
-        The value, if any, to print on the right.
-
-    Returns
-    -------
-    None
-
-    """
-    if value is None:
-        print(label)
-    else:
-        value_width = constants.TABLE_WIDTH - (len(label) + 1)
-        print(label, value.rjust(value_width))
-    print("-" * constants.TABLE_WIDTH)
-
-
-def _stringify_int(integer):
-    """Convert an integer into a string formatted with thousand separators.
-
-    Parameters
-    ----------
-    integer : int
-        The integer.
-
-    Returns
-    -------
-    str
-        The integer turned into a string.
-
-    """
-    return "{:,}".format(integer)

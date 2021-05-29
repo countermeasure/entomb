@@ -7,13 +7,11 @@ from entomb import (
     constants,
     utilities,
 )
-# TODO: move _build_hash_file_contents to utilities and rename.
-from entomb.processing import _build_hash_file_contents
 
 
 @utilities.hide_cursor()
 def check_files(path, include_git):
-    """TODO
+    """TODO.
 
     Parameters
     ----------
@@ -219,126 +217,49 @@ def _print_full_report(directory_count, entombed_file_count, errors,
         entombed_percentage = "n/a"
 
     # Print the report.
-    _print_report_line("Results")
-    _print_report_line("Errors", _stringify_int(len(errors)))
-    _print_report_line("Entombed", entombed_percentage)
+    utilities.print_report_line("Results")
+    utilities.print_report_line("Errors", utilities.stringify_int(len(errors)))
+    utilities.print_report_line("Entombed", entombed_percentage)
     if unentombed_file_count:
-        _print_report_line(
+        utilities.print_report_line(
             "Unentombed files",
-            _stringify_int(unentombed_file_count),
+            utilities.stringify_int(unentombed_file_count),
         )
     if inaccessible_file_count:
-        _print_report_line(
+        utilities.print_report_line(
             "Inaccessible files",
-            _stringify_int(inaccessible_file_count),
+            utilities.stringify_int(inaccessible_file_count),
         )
-    _print_report_line("Total files", _stringify_int(total_file_count))
+    utilities.print_report_line(
+        "Total files",
+        utilities.stringify_int(total_file_count),
+    )
     if link_count:
-        _print_report_line("Links", _stringify_int(link_count))
+        utilities.print_report_line(
+            "Links",
+            utilities.stringify_int(link_count),
+        )
     if subdirectory_count:
-        _print_report_line(
+        utilities.print_report_line(
             "Sub-directories",
-            _stringify_int(subdirectory_count),
+            utilities.stringify_int(subdirectory_count),
         )
     print()
 
     # Print any errors.
-    _print_errors(errors)
-
-
-# TODO: Dedupe this function.
-def _print_errors(errors):
-    """Print the list of errors resulting from file processing.
-
-    Parameters
-    ----------
-    errors : list of str
-        A list of error messages.
-
-    Returns
-    -------
-    None
-
-    """
-    # Return if there are no errors.
-    if not errors:
-        return
-
-    # Print the header.
-    utilities.print_header("Errors")
-
-    # Print up to 10 errors.
-    for error in errors[:10]:
-        print(">> {}".format(error))
-
-    # If there are more than 10 errors, print a message about how many more
-    # there are.
-    error_count = len(errors)
-    if error_count > 10:
-        unshown_errors = len(errors) - 10
-        print(">> Plus {} more errors".format(unshown_errors))
-
-    print()
-
-
-# TODO: Dedupe this function.
-def _stringify_int(integer):
-    """Convert an integer into a string formatted with thousand separators.
-
-    Parameters
-    ----------
-    integer : int
-        The integer.
-
-    Returns
-    -------
-    str
-        The integer turned into a string.
-
-    """
-    return "{:,}".format(integer)
-
-
-# TODO: Dedupe this function.
-def _print_report_line(label, value=None):
-    """Print a line in the full report followed by a separator line.
-
-    Parameters
-    ----------
-    label : str
-        The label to print on the left.
-    value : str, optional
-        The value, if any, to print on the right.
-
-    Returns
-    -------
-    None
-
-    """
-    if value is None:
-        print(label)
-    else:
-        value_width = constants.TABLE_WIDTH - (len(label) + 1)
-        print(label, value.rjust(value_width))
-    print("-" * constants.TABLE_WIDTH)
+    utilities.print_errors(errors)
 
 
 def _hash_files_are_okay(file_path):
-    # Get actual and expected hash file contents.
-    raw_expected_contents = _build_hash_file_contents(file_path)
-    # TODO: Put the new line in a try/except block.
-    raw_actual_contents = _get_hash_file_contents(file_path)
-    expected_contents = json.loads(raw_expected_contents)
-    actual_contents = json.loads(raw_actual_contents)
-
-    # Check that actual and expected contents match.
-    contents_match = (
-        actual_contents["file"] == expected_contents["file"]
-        and actual_contents["file_mtime"] == expected_contents["file_mtime"]
-        and actual_contents["file_size"] == expected_contents["file_size"]
-        and actual_contents["hash"] == expected_contents["hash"]
+    # TODO: Put the next line in a try/except block.
+    actual_contents = _get_hash_file_contents(file_path)
+    hash_time = json.loads(actual_contents)["hash_time"]
+    expected_contents = utilities.build_hash_file_contents(
+        file_path,
+        hash_time,
     )
-    if not contents_match:
+    # Check that actual and expected contents match.
+    if actual_contents != expected_contents:
         return False
 
     # Check that all data files are immutable and read-only.

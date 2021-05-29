@@ -1,6 +1,5 @@
 import contextlib
 import datetime
-import hashlib
 import json
 import os
 import shutil
@@ -38,16 +37,6 @@ def process_objects(path, immutable, include_git, dry_run):
         If the path does not exist.
 
     """
-    # TODO: Does this want to write a log file to record what it did? Wrap any
-    # log functionality in a decorator so that whatever has been done is
-    # written to file even in the event of a crash.
-    # {"time": thetime, "added": [filenames]}
-    # Append each line to the file as you go. Make the logs human readable, but
-    # also formatted in a way that they're machine parsable and also easly
-    # grepable:
-    # <timestamp> <action> <filepath>
-    # action can be ADDED, CHANGED, REMOVED?
-
     # Parameter check.
     assert os.path.exists(path)
 
@@ -130,7 +119,7 @@ def process_objects(path, immutable, include_git, dry_run):
     print()
 
     # Print any errors.
-    _print_errors(errors)
+    utilities.print_errors(errors)
 
 
 def _create_hash_files(path):
@@ -174,7 +163,7 @@ def _create_hash_files(path):
     hash_file_paths = _get_hash_file_paths(path)
 
     # Create data file contents.
-    hash_file_contents = _build_hash_file_contents(path)
+    hash_file_contents = utilities.build_hash_file_contents(path)
 
     # Create each hash file.
     for hash_file_path in hash_file_paths:
@@ -268,73 +257,6 @@ def _delete_hashes_directory(path):
 
     # Delete the .entomb directory if it's now empty.
     _delete_directory_if_empty(entomb_directory_path)
-
-
-def _get_checksum(path):
-    """Get the checksum for the file path, prefixed with the hash type.
-
-    Parameters
-    ----------
-    path : str
-        The absolute path of a file.
-
-    Returns
-    -------
-    str
-        The checksum of the file at the path, prefixed with the hash type. For
-        example: "sha512-b24a099...844c3f3"
-
-    Raises
-    ------
-    AssertionError
-        If the path is not a file or does not exist.
-
-    """
-    # Parameter check.
-    assert os.path.isfile(path)
-    assert not os.path.islink(path)
-
-    _hash = hashlib.sha512()
-    chunk_size = 16384
-
-    with open(path, "rb") as _file:
-        for chunk in iter(lambda: _file.read(chunk_size), b""):
-            _hash.update(chunk)
-
-    return "{}-{}".format(_hash.name, _hash.hexdigest())
-
-
-def _build_hash_file_contents(path):
-    """TODO."""
-    # TODO: Should the word 'data' be used everywhere that the word "hashes" is
-    # now? This file stores data now rather than just hashes. And the directory
-    # it exists in contains data not rather than just hashes, so maybe the
-    # directory should be called "data" too. Do a find and replace for all uses
-    # of "hash" in the code?
-    time_format = "%Y-%m-%dT%H:%M:%S%z"
-
-    filename = os.path.basename(path)
-    statinfo = os.stat(path)
-    st_mtime = statinfo.st_mtime
-    raw_mtime = datetime.datetime.fromtimestamp(
-        st_mtime,
-        datetime.timezone.utc,
-    )
-    mtime = raw_mtime.strftime(time_format)
-    st_size = statinfo.st_size
-    checksum = _get_checksum(path)
-    now = datetime.datetime.now(datetime.timezone.utc).strftime(time_format)
-
-    data = {
-        "file": filename,
-        "file_mtime": mtime,
-        "file_size": st_size,
-        "hash": checksum,
-        "hash_time": now,
-    }
-    hash_file_contents = json.dumps(data, indent=4)
-
-    return hash_file_contents
 
 
 def _get_hash_file_paths(path):
@@ -432,40 +354,6 @@ def _is_entomb_subdirectory(path):
     return subdirectory_fragment in path
 
 
-def _print_errors(errors):
-    """Print the list of errors resulting from file processing.
-
-    Parameters
-    ----------
-    errors : list of str
-        A list of error messages.
-
-    Returns
-    -------
-    None
-
-    """
-    # Return if there are no errors.
-    if not errors:
-        return
-
-    # Print the header.
-    utilities.print_header("Errors")
-
-    # Print up to 10 errors.
-    for error in errors[:10]:
-        print(">> {}".format(error))
-
-    # If there are more than 10 errors, print a message about how many more
-    # there are.
-    error_count = len(errors)
-    if error_count > 10:
-        unshown_errors = len(errors) - 10
-        print(">> Plus {} more errors".format(unshown_errors))
-
-    print()
-
-
 def _process_object(path, immutable, dry_run):
     """Set or unset the immutable attribute for a file.
 
@@ -509,18 +397,14 @@ def _process_object(path, immutable, dry_run):
     hash_file_paths = _get_hash_file_paths(path)
     if is_immutable:
         for hash_file_path in hash_file_paths:
-            raw_expected_contents = _build_hash_file_contents(path)
-            expected_contents = json.loads(raw_expected_contents)
             with open(hash_file_path, "r") as _file:
-                raw_contents = _file.read()
-            contents = json.loads(raw_contents)
-            contents_match = (
-                contents["file"] == expected_contents["file"]
-                and contents["file_mtime"] == expected_contents["file_mtime"]
-                and contents["file_size"] == expected_contents["file_size"]
-                and contents["hash"] == expected_contents["hash"]
+                contents = _file.read()
+            hash_time = json.loads(contents)["hash_time"]
+            expected_contents = utilities.build_hash_file_contents(
+                path,
+                hash_time,
             )
-            if not contents_match:
+            if contents != expected_contents:
                 print(contents)
                 print(expected_contents)
                 raise Exception("TODO")  # TODO: What sort / what message?
@@ -535,6 +419,7 @@ def _process_object(path, immutable, dry_run):
         if immutable:
             _set_attribute(constants.IMMUTABLE_ATTRIBUTE, path)
             _create_hash_files(path)
+            _write_to_log(constants.ADDED, path)
         else:
             _set_attribute(constants.MUTABLE_ATTRIBUTE, path)
             _delete_hashes_directory(path)
@@ -543,6 +428,22 @@ def _process_object(path, immutable, dry_run):
     # attribute was changed, or if this was a dry run, should have been
     # changed.
     return change_attribute
+
+
+def _write_to_log(action, path):
+    # Append each line to the file as you go. Make the logs human readable, but
+    # also formatted in a way that they're machine parsable and also easly
+    # grepable:
+    # action can be ADDED, CHANGED, REMOVED?
+    # TODO: Open log file for appending, creating it first if necessary.
+    # TODO: How to name logfiles? Put them in a ".entomb/logs" directory? If
+    # so, set "logs" as a constant in the Entomb directories section of the
+    # constants.py file
+    now = datetime.datetime.now(datetime.timezone.utc)
+    timestamp = now.strftime(constants.DATETIME_FORMAT)
+    log_entry = "{} | {} | {}".format(timestamp, action, path)
+    # TODO: Write the line to the file and don't bother printing it.
+    print(log_entry)
 
 
 def _set_attribute(attribute, path):

@@ -27,7 +27,13 @@ MUTABLE_ATTRIBUTE = "-i"
 
 
 # Formatting
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 TABLE_WIDTH = 40
+
+
+# Logging actions.
+# TODO: Is this needed?
+ADDED = "ADDED"
 
 
 # Path types.

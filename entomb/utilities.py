@@ -1,5 +1,7 @@
 import datetime
 import decimal
+import hashlib
+import json
 import os
 import subprocess
 from contextlib import contextmanager
@@ -8,6 +10,44 @@ from entomb import (
     constants,
     exceptions,
 )
+
+
+def build_hash_file_contents(path, hash_time=None):
+    """TODO.
+
+    TODO: Note that hash_time must be a string, and the form it must be in.
+
+    """
+    # TODO: Should the word 'data' be used everywhere that the word "hashes" is
+    # now? This file stores data now rather than just hashes. And the directory
+    # it exists in contains data not rather than just hashes, so maybe the
+    # directory should be called "data" too. Do a find and replace for all uses
+    # of "hash" in the code?
+
+    filename = os.path.basename(path)
+    statinfo = os.stat(path)
+    st_mtime = statinfo.st_mtime
+    raw_mtime = datetime.datetime.fromtimestamp(
+        st_mtime,
+        datetime.timezone.utc,
+    )
+    mtime = raw_mtime.strftime(constants.DATETIME_FORMAT)
+    st_size = statinfo.st_size
+    checksum = _get_checksum(path)
+    if not hash_time:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        hash_time = now.strftime(constants.DATETIME_FORMAT)
+
+    data = {
+        "file": filename,
+        "file_mtime": mtime,
+        "file_size": st_size,
+        "hash": checksum,
+        "hash_time": hash_time,
+    }
+    hash_file_contents = json.dumps(data, indent=4)
+
+    return hash_file_contents
 
 
 def clear_line():
@@ -159,6 +199,40 @@ def hide_cursor():
         print("\033[?25h", end="")
 
 
+def print_errors(errors):
+    """Print the list of errors resulting from file processing.
+
+    Parameters
+    ----------
+    errors : list of str
+        A list of error messages.
+
+    Returns
+    -------
+    None
+
+    """
+    # Return if there are no errors.
+    if not errors:
+        return
+
+    # Print the header.
+    print_header("Errors")
+
+    # Print up to 10 errors.
+    for error in errors[:10]:
+        print(">> {}".format(error))
+
+    # If there are more than 10 errors, print a message about how many more
+    # there are.
+    error_count = len(errors)
+    if error_count > 10:
+        unshown_errors = len(errors) - 10
+        print(">> Plus {} more errors".format(unshown_errors))
+
+    print()
+
+
 def print_header(header):
     """Print a underlined header.
 
@@ -176,7 +250,7 @@ def print_header(header):
     print("-" * len(header))
 
 
-def print_progress_bar(start_time, count, total, print_frequency=100):
+def print_progress_bar(start_time, count, total, print_frequency=1):
     """Print a progress bar.
 
     Parameters
@@ -189,7 +263,7 @@ def print_progress_bar(start_time, count, total, print_frequency=100):
         The total number of cycles to complete.
     print_frequency : int, optional
         The number of cycles to complete before re-printing the count. The
-        default is 100.
+        default is 1.
 
     Returns
     -------
@@ -220,6 +294,46 @@ def print_progress_bar(start_time, count, total, print_frequency=100):
         # Print the progress bar.
         clear_line()
         print(progress_bar, end="\r")
+
+
+def print_report_line(label, value=None):
+    """Print a line in the full report followed by a separator line.
+
+    Parameters
+    ----------
+    label : str
+        The label to print on the left.
+    value : str, optional
+        The value, if any, to print on the right.
+
+    Returns
+    -------
+    None
+
+    """
+    if value is None:
+        print(label)
+    else:
+        value_width = constants.TABLE_WIDTH - (len(label) + 1)
+        print(label, value.rjust(value_width))
+    print("-" * constants.TABLE_WIDTH)
+
+
+def stringify_int(integer):
+    """Convert an integer into a string formatted with thousand separators.
+
+    Parameters
+    ----------
+    integer : int
+        The integer.
+
+    Returns
+    -------
+    str
+        The integer turned into a string.
+
+    """
+    return "{:,}".format(integer)
 
 
 def _add_percentage_to_progress_bar(progress_bar, count, total):
@@ -311,6 +425,40 @@ def _build_progress_bar(count, total):
     progress_width = int(progress * bar_width)
 
     return ("█" * progress_width).ljust(bar_width, "░")
+
+
+def _get_checksum(path):
+    """Get the checksum for the file path, prefixed with the hash type.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of a file.
+
+    Returns
+    -------
+    str
+        The checksum of the file at the path, prefixed with the hash type. For
+        example: "sha512-b24a099...844c3f3"
+
+    Raises
+    ------
+    AssertionError
+        If the path is not a file or does not exist.
+
+    """
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    _hash = hashlib.sha512()
+    chunk_size = 16384
+
+    with open(path, "rb") as _file:
+        for chunk in iter(lambda: _file.read(chunk_size), b""):
+            _hash.update(chunk)
+
+    return "{}-{}".format(_hash.name, _hash.hexdigest())
 
 
 def _get_immutable_flag(path):

@@ -73,7 +73,6 @@ def list_files(path, immutable, include_git):
             start_time,
             (file_count + link_count),
             total_file_paths,
-            1,
         )
 
     # Clear the final progress message.
