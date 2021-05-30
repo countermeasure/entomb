@@ -183,6 +183,88 @@ def check_files(path, include_git):
     )
 
 
+def _get_actual_data_file_paths(path):
+    file_directory, filename = os.path.split(path)
+    data_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY_NAME,
+        constants.DATA_DIRECTORY_NAME,
+        filename,
+    )
+    data_file_names = os.listdir(data_directory_path)
+    data_file_paths = []
+    for data_file_name in data_file_names:
+        data_file_path = os.path.join(data_directory_path, data_file_name)
+        data_file_paths.append(data_file_path)
+
+    return data_file_paths
+
+
+def _get_data_file_contents(path):
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    contents_list = set()
+
+    data_file_paths = _get_actual_data_file_paths(path)
+    for data_file_path in data_file_paths:
+        with open(data_file_path, "r") as _file:
+            contents = _file.read()
+            contents_list.add(contents)
+    contents_count = len(contents_list)
+    if contents_count == 1:
+        return list(contents_list)[0]
+    if contents_count == 0:
+        raise Exception("TODO: There are no contents")
+    if contents_count > 1:
+        raise Exception("TODO: There are multiple contents")
+
+
+def _get_data_subdirectory_errors(file_path):
+    """TODO.
+
+    Returns
+    -------
+    list of str
+        A list of errors.
+
+    """
+    errors = []
+
+    # TODO: Check that there aren't extra files in the data file directory, and
+    # also that no expected data files are missing.
+
+    # Check that all data files are immutable and read-only.
+    data_file_paths = _get_actual_data_file_paths(file_path)
+    for data_file_path in data_file_paths:
+        is_immutable = utilities.file_is_immutable(data_file_path)
+        if not is_immutable:
+            msg = "TODO: {} data file not immutable.".format(file_path)
+            errors.append(msg)
+
+        # TODO: Make utilities.file_is_read_only(path) function.
+        statinfo = os.stat(data_file_path)
+        is_read_only = oct(statinfo.st_mode).endswith("444")
+        if not is_read_only:
+            msg = "TODO: {} data file not read-only.".format(file_path)
+            errors.append(msg)
+
+    # TODO: Put the next line in a try/except block.
+    actual_contents = _get_data_file_contents(file_path)
+
+    checksum_time = json.loads(actual_contents)["checksum_time"]
+    expected_contents = utilities.build_data_file_contents(
+        file_path,
+        checksum_time,
+    )
+    # Check that actual and expected contents match.
+    if actual_contents != expected_contents:
+        errors.append("TODO: Data file doesn't match actual file.")
+
+    return errors
+
+
 def _print_full_report(directory_count, entombed_file_count, errors,
                        files_with_errors_count, inaccessible_file_count,
                        link_count, unentombed_file_count):
@@ -255,85 +337,3 @@ def _print_full_report(directory_count, entombed_file_count, errors,
 
     # Print any errors.
     utilities.print_errors(errors)
-
-
-def _get_data_subdirectory_errors(file_path):
-    """TODO.
-
-    Returns
-    -------
-    list of str
-        A list of errors.
-
-    """
-    errors = []
-
-    # TODO: Check that there aren't extra files in the data file directory, and
-    # also that no expected data files are missing.
-
-    # Check that all data files are immutable and read-only.
-    data_file_paths = _get_data_file_paths(file_path)
-    for data_file_path in data_file_paths:
-        is_immutable = utilities.file_is_immutable(data_file_path)
-        if not is_immutable:
-            msg = "TODO: {} data file not immutable.".format(file_path)
-            errors.append(msg)
-
-        # TODO: Make utilities.file_is_read_only(path) function.
-        statinfo = os.stat(data_file_path)
-        is_read_only = oct(statinfo.st_mode).endswith("444")
-        if not is_read_only:
-            msg = "TODO: {} data file not read-only.".format(file_path)
-            errors.append(msg)
-
-    # TODO: Put the next line in a try/except block.
-    actual_contents = _get_data_file_contents(file_path)
-
-    checksum_time = json.loads(actual_contents)["checksum_time"]
-    expected_contents = utilities.build_data_file_contents(
-        file_path,
-        checksum_time,
-    )
-    # Check that actual and expected contents match.
-    if actual_contents != expected_contents:
-        errors.append("TODO: Data file doesn't match actual file.")
-
-    return errors
-
-
-def _get_data_file_paths(path):
-    file_directory, filename = os.path.split(path)
-    data_directory_path = os.path.join(
-        file_directory,
-        constants.ENTOMB_DIRECTORY_NAME,
-        constants.DATA_DIRECTORY_NAME,
-        filename,
-    )
-    data_file_names = os.listdir(data_directory_path)
-    data_file_paths = []
-    for data_file_name in data_file_names:
-        data_file_path = os.path.join(data_directory_path, data_file_name)
-        data_file_paths.append(data_file_path)
-
-    return data_file_paths
-
-
-def _get_data_file_contents(path):
-    # Parameter check.
-    assert os.path.isfile(path)
-    assert not os.path.islink(path)
-
-    contents_list = set()
-
-    data_file_paths = _get_data_file_paths(path)
-    for data_file_path in data_file_paths:
-        with open(data_file_path, "r") as _file:
-            contents = _file.read()
-            contents_list.add(contents)
-    contents_count = len(contents_list)
-    if contents_count == 1:
-        return list(contents_list)[0]
-    if contents_count == 0:
-        raise Exception("TODO: There are no contents")
-    if contents_count > 1:
-        raise Exception("TODO: There are multiple contents")
