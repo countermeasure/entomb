@@ -471,26 +471,44 @@ def _set_attribute(attribute, path):
 
 
 def _write_to_log(action, path):
-    # Append each line to the file as you go. Make the logs human readable, but
-    # also formatted in a way that they're machine parsable and also easly
-    # grepable:
-    # action can be ADDED, CHANGED, REMOVED?
+    """Record an action in a log file.
+
+    Parameters
+    ----------
+    action : str
+        The action which was performed. Either "ADDED" or "REMOVED".
+    path : str
+        The absolute path of the file the action was performed upon.
+
+    Returns
+    -------
+    None
+
+    """
     file_directory, filename = os.path.split(path)
-    now = datetime.datetime.now(datetime.timezone.utc)
-    formatted_now = now.strftime("%Y%m%d")
-    log_filename = "entomb_{}.log".format(formatted_now)
+
+    # Ensure logs directory exists.
     logs_directory_path = os.path.join(
         file_directory,
         constants.ENTOMB_DIRECTORY_NAME,
         constants.LOGS_DIRECTORY_NAME,
     )
     os.makedirs(logs_directory_path, exist_ok=True)
-    log_file_path = os.path.join(logs_directory_path, log_filename)
+
+    # Build the log entry.
     now = datetime.datetime.now(datetime.timezone.utc)
     timestamp = now.strftime(constants.DATETIME_FORMAT)
     log_entry = "{} | {} | {}\n".format(timestamp, action, filename)
+
+    # Build the log file path.
+    filename_timestamp = now.strftime("%Y%m%d")
+    log_filename = "entomb_{}.log".format(filename_timestamp)
+    log_file_path = os.path.join(logs_directory_path, log_filename)
+
     # TODO: Should the log file be read-only and immutable when not being
     # written to? Yes, but profile this to see if it's worth it.
+
+    # Append the entry to the log file.
     with open(log_file_path, "a") as _file:
         _file.write(log_entry)
         # TODO: Profile without the next two lines.
