@@ -174,6 +174,9 @@ def file_paths(path, include_git):
             d for d in dirnames if d != constants.ENTOMB_DIRECTORY_NAME
         ]
 
+        # Sort filenames so that they are yielded in alphabetical order.
+        filenames.sort()
+
         for filename in filenames:
             yield os.path.join(root_dir, filename)
 

@@ -53,7 +53,6 @@ def check_files(path, include_git):
         return
 
     # Print the progress header and set up the progress bar.
-    # TODO: Get the progress bar working, and counting files correctly.
     utilities.print_header("Progress")
     total_file_paths = utilities.count_file_paths(path, include_git)
     start_time = datetime.datetime.now()
@@ -157,7 +156,6 @@ def check_files(path, include_git):
                 start_time,
                 total_count,
                 total_file_paths,
-                10,
             )
     print()
     print()
@@ -263,16 +261,8 @@ def _hash_files_are_okay(file_path):
         return False
 
     # Check that all data files are immutable and read-only.
-    file_directory, filename = os.path.split(file_path)
-    hash_directory_path = os.path.join(
-        file_directory,
-        constants.ENTOMB_DIRECTORY_NAME,
-        constants.HASHES_DIRECTORY_NAME,
-        filename,
-    )
-    hash_file_names = os.listdir(hash_directory_path)
-    for hash_file_name in hash_file_names:
-        hash_file_path = os.path.join(hash_directory_path, hash_file_name)
+    hash_file_paths = _get_hash_file_paths(file_path)
+    for hash_file_path in hash_file_paths:
         is_immutable = utilities.file_is_immutable(hash_file_path)
         statinfo = os.stat(hash_file_path)
         # TODO: Make utilities.file_is_read_only(path) function.
@@ -283,11 +273,7 @@ def _hash_files_are_okay(file_path):
     return True
 
 
-def _get_hash_file_contents(path):
-    # Parameter check.
-    assert os.path.isfile(path)
-    assert not os.path.islink(path)
-
+def _get_hash_file_paths(path):
     file_directory, filename = os.path.split(path)
     hash_directory_path = os.path.join(
         file_directory,
@@ -296,10 +282,23 @@ def _get_hash_file_contents(path):
         filename,
     )
     hash_file_names = os.listdir(hash_directory_path)
-    hashes = set()
-
+    hash_file_paths = []
     for hash_file_name in hash_file_names:
         hash_file_path = os.path.join(hash_directory_path, hash_file_name)
+        hash_file_paths.append(hash_file_path)
+
+    return hash_file_paths
+
+
+def _get_hash_file_contents(path):
+    # Parameter check.
+    assert os.path.isfile(path)
+    assert not os.path.islink(path)
+
+    hashes = set()
+
+    hash_file_paths = _get_hash_file_paths(path)
+    for hash_file_path in hash_file_paths:
         with open(hash_file_path, "r") as _file:
             contents = _file.read()
             hashes.add(contents)

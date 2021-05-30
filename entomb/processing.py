@@ -71,9 +71,6 @@ def process_objects(path, immutable, include_git, dry_run):
 
         else:
             # Change the file's attribute if necessary.
-            # TODO: Is this a good place to check if it's already entombed, and
-            # not to do anything if it should be entombed and is already
-            # entombed?
             try:
                 attribute_was_changed = _process_object(
                     file_path,
@@ -94,7 +91,6 @@ def process_objects(path, immutable, include_git, dry_run):
             start_time,
             (file_count + link_count),
             total_file_paths,
-            5,
         )
 
     print()
@@ -120,6 +116,29 @@ def process_objects(path, immutable, include_git, dry_run):
 
     # Print any errors.
     utilities.print_errors(errors)
+
+
+def _check_hash_files(path, is_immutable):
+    # Check that hash files exist and are correct for an immutable file, and
+    # don't exist for a mutable file.
+    hash_file_paths = _get_hash_file_paths(path)
+    if is_immutable:
+        for hash_file_path in hash_file_paths:
+            with open(hash_file_path, "r") as _file:
+                contents = _file.read()
+            hash_time = json.loads(contents)["hash_time"]
+            expected_contents = utilities.build_hash_file_contents(
+                path,
+                hash_time,
+            )
+            if contents != expected_contents:
+                print(contents)
+                print(expected_contents)
+                raise Exception("")  # TODO: What sort / what message?
+    else:
+        hash_file_directory = os.path.dirname(hash_file_paths[0])
+        if os.path.exists(hash_file_directory):
+            raise Exception("")  # TODO: What sort / what message?
 
 
 def _create_hash_files(path):
@@ -171,6 +190,9 @@ def _create_hash_files(path):
         # Create the hash file.
         with open(hash_file_path, "w") as _file:
             _file.write(hash_file_contents)
+            # TODO: Profile without the next two lines.
+            _file.flush()
+            os.fsync(_file.fileno())
 
         # Make the hash file read-only and immutable.
         os.chmod(hash_file_path, 0o444)
@@ -244,7 +266,7 @@ def _delete_hashes_directory(path):
     file_hashes_directory_path = os.path.join(hashes_directory_path, filename)
 
     # Make all files in data directory mutable.
-    for root_dir, dirnames, filenames in os.walk(file_hashes_directory_path):
+    for root_dir, _, filenames in os.walk(file_hashes_directory_path):
         for filename in filenames:
             file_path = os.path.join(root_dir, filename)
             _set_attribute(constants.MUTABLE_ATTRIBUTE, file_path)
@@ -392,29 +414,14 @@ def _process_object(path, immutable, dry_run):
         msg = "Immutable attribute not settable for {}".format(path)
         raise exceptions.SetAttributeError(msg) from error
 
-    # Check that hash files exist and are correct for an immutable file, and
-    # don't exist for a mutable file.
-    hash_file_paths = _get_hash_file_paths(path)
-    if is_immutable:
-        for hash_file_path in hash_file_paths:
-            with open(hash_file_path, "r") as _file:
-                contents = _file.read()
-            hash_time = json.loads(contents)["hash_time"]
-            expected_contents = utilities.build_hash_file_contents(
-                path,
-                hash_time,
-            )
-            if contents != expected_contents:
-                print(contents)
-                print(expected_contents)
-                raise Exception("TODO")  # TODO: What sort / what message?
-    else:
-        hash_file_directory = os.path.dirname(hash_file_paths[0])
-        if os.path.exists(hash_file_directory):
-            raise Exception("TODO")  # TODO: What sort / what message?
+    # Make sure that the state (or absence) of hash files related to the file
+    # is correct.
+    _check_hash_files(path, is_immutable)
 
+    # Work out whether to change the file's immutability.
     change_attribute = immutable != is_immutable
 
+    # Entomb or unentomb the file if required.
     if change_attribute and not dry_run:
         if immutable:
             _set_attribute(constants.IMMUTABLE_ATTRIBUTE, path)
@@ -423,27 +430,12 @@ def _process_object(path, immutable, dry_run):
         else:
             _set_attribute(constants.MUTABLE_ATTRIBUTE, path)
             _delete_hashes_directory(path)
+            _write_to_log(constants.REMOVED, path)
 
     # The value of change_attribute is a proxy for whether the immutable
     # attribute was changed, or if this was a dry run, should have been
     # changed.
     return change_attribute
-
-
-def _write_to_log(action, path):
-    # Append each line to the file as you go. Make the logs human readable, but
-    # also formatted in a way that they're machine parsable and also easly
-    # grepable:
-    # action can be ADDED, CHANGED, REMOVED?
-    # TODO: Open log file for appending, creating it first if necessary.
-    # TODO: How to name logfiles? Put them in a ".entomb/logs" directory? If
-    # so, set "logs" as a constant in the Entomb directories section of the
-    # constants.py file
-    now = datetime.datetime.now(datetime.timezone.utc)
-    timestamp = now.strftime(constants.DATETIME_FORMAT)
-    log_entry = "{} | {} | {}".format(timestamp, action, path)
-    # TODO: Write the line to the file and don't bother printing it.
-    print(log_entry)
 
 
 def _set_attribute(attribute, path):
@@ -476,3 +468,31 @@ def _set_attribute(attribute, path):
     except subprocess.CalledProcessError as error:
         msg = "Immutable attribute not settable for {}".format(path)
         raise exceptions.SetAttributeError(msg) from error
+
+
+def _write_to_log(action, path):
+    # Append each line to the file as you go. Make the logs human readable, but
+    # also formatted in a way that they're machine parsable and also easly
+    # grepable:
+    # action can be ADDED, CHANGED, REMOVED?
+    file_directory, filename = os.path.split(path)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    formatted_now = now.strftime("%Y%m%d")
+    log_filename = "entomb_{}.log".format(formatted_now)
+    logs_directory_path = os.path.join(
+        file_directory,
+        constants.ENTOMB_DIRECTORY_NAME,
+        constants.LOGS_DIRECTORY_NAME,
+    )
+    os.makedirs(logs_directory_path, exist_ok=True)
+    log_file_path = os.path.join(logs_directory_path, log_filename)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    timestamp = now.strftime(constants.DATETIME_FORMAT)
+    log_entry = "{} | {} | {}\n".format(timestamp, action, filename)
+    # TODO: Should the log file be read-only and immutable when not being
+    # written to? Yes, but profile this to see if it's worth it.
+    with open(log_file_path, "a") as _file:
+        _file.write(log_entry)
+        # TODO: Profile without the next two lines.
+        _file.flush()
+        os.fsync(_file.fileno())
