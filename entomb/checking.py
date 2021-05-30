@@ -139,12 +139,15 @@ def check_files(path, include_git):
 
                 # Files that have been entombed.
                 elif is_immutable and has_data_subdirectory:
-                    contents_are_okay = _data_files_are_okay(file_path)
-                    if contents_are_okay:
-                        entombed_file_count += 1
-                    else:
-                        errors.append("TODO {}".format(file_path))
+                    data_subdirectory_errors = _get_data_subdirectory_errors(
+                        file_path,
+                    )
+                    if data_subdirectory_errors:
+                        for subdirectory_error in data_subdirectory_errors:
+                            errors.append(subdirectory_error)
                         files_with_errors_count += 1
+                    else:
+                        entombed_file_count += 1
 
                 # All that's left are unentombed files.
                 else:
@@ -254,9 +257,38 @@ def _print_full_report(directory_count, entombed_file_count, errors,
     utilities.print_errors(errors)
 
 
-def _data_files_are_okay(file_path):
+def _get_data_subdirectory_errors(file_path):
+    """TODO.
+
+    Returns
+    -------
+    list of str
+        A list of errors.
+
+    """
+    errors = []
+
+    # TODO: Check that there aren't extra files in the data file directory, and
+    # also that no expected data files are missing.
+
+    # Check that all data files are immutable and read-only.
+    data_file_paths = _get_data_file_paths(file_path)
+    for data_file_path in data_file_paths:
+        is_immutable = utilities.file_is_immutable(data_file_path)
+        if not is_immutable:
+            msg = "TODO: {} data file not immutable.".format(file_path)
+            errors.append(msg)
+
+        # TODO: Make utilities.file_is_read_only(path) function.
+        statinfo = os.stat(data_file_path)
+        is_read_only = oct(statinfo.st_mode).endswith("444")
+        if not is_read_only:
+            msg = "TODO: {} data file not read-only.".format(file_path)
+            errors.append(msg)
+
     # TODO: Put the next line in a try/except block.
     actual_contents = _get_data_file_contents(file_path)
+
     checksum_time = json.loads(actual_contents)["checksum_time"]
     expected_contents = utilities.build_data_file_contents(
         file_path,
@@ -264,19 +296,9 @@ def _data_files_are_okay(file_path):
     )
     # Check that actual and expected contents match.
     if actual_contents != expected_contents:
-        return False
+        errors.append("TODO: Data file doesn't match actual file.")
 
-    # Check that all data files are immutable and read-only.
-    data_file_paths = _get_data_file_paths(file_path)
-    for data_file_path in data_file_paths:
-        is_immutable = utilities.file_is_immutable(data_file_path)
-        statinfo = os.stat(data_file_path)
-        # TODO: Make utilities.file_is_read_only(path) function.
-        is_read_only = oct(statinfo.st_mode).endswith("444")
-        if not is_immutable or not is_read_only:
-            return False
-
-    return True
+    return errors
 
 
 def _get_data_file_paths(path):
