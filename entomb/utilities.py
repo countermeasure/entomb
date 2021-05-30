@@ -12,18 +12,12 @@ from entomb import (
 )
 
 
-def build_hash_file_contents(path, hash_time=None):
+def build_data_file_contents(path, checksum_time=None):
     """TODO.
 
-    TODO: Note that hash_time must be a string, and the form it must be in.
+    TODO: Note that checksum_time must be a string, and the form it must be in.
 
     """
-    # TODO: Should the word 'data' be used everywhere that the word "hashes" is
-    # now? This file stores data now rather than just hashes. And the directory
-    # it exists in contains data not rather than just hashes, so maybe the
-    # directory should be called "data" too. Do a find and replace for all uses
-    # of "hash" in the code?
-
     filename = os.path.basename(path)
     statinfo = os.stat(path)
     st_mtime = statinfo.st_mtime
@@ -34,20 +28,20 @@ def build_hash_file_contents(path, hash_time=None):
     mtime = raw_mtime.strftime(constants.DATETIME_FORMAT)
     st_size = statinfo.st_size
     checksum = _get_checksum(path)
-    if not hash_time:
+    if not checksum_time:
         now = datetime.datetime.now(datetime.timezone.utc)
-        hash_time = now.strftime(constants.DATETIME_FORMAT)
+        checksum_time = now.strftime(constants.DATETIME_FORMAT)
 
     data = {
         "file": filename,
         "file_mtime": mtime,
         "file_size": st_size,
-        "hash": checksum,
-        "hash_time": hash_time,
+        "checksum": checksum,
+        "checksum_time": checksum_time,
     }
-    hash_file_contents = json.dumps(data, indent=4)
+    data_file_contents = json.dumps(data, indent=4)
 
-    return hash_file_contents
+    return data_file_contents
 
 
 def clear_line():
@@ -174,7 +168,9 @@ def file_paths(path, include_git):
             d for d in dirnames if d != constants.ENTOMB_DIRECTORY_NAME
         ]
 
-        # Sort filenames so that they are yielded in alphabetical order.
+        # Sort directory names and filenames so that they are yielded in
+        # alphabetical order.
+        dirnames.sort()
         filenames.sort()
 
         for filename in filenames:

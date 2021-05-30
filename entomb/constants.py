@@ -16,9 +16,9 @@ VERSION_SHORT_ARG = "-v"
 
 
 # Entomb directories.
+DATA_DIRECTORY_NAME = "data"
+DATA_FILES_PER_FILE = 3
 ENTOMB_DIRECTORY_NAME = ".entomb"
-HASHES_DIRECTORY_NAME = "hashes"
-HASH_FILES_PER_FILE = 3
 LOGS_DIRECTORY_NAME = "logs"
 
 
@@ -33,8 +33,6 @@ TABLE_WIDTH = 40
 
 
 # Logging actions.
-# TODO: Is this needed? Change to "ADD" and "REMOVE" instead? More
-# git-commit-like.
 ADDED = "ADDED"
 REMOVED = "REMOVED"
 

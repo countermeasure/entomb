@@ -65,12 +65,15 @@ def check_files(path, include_git):
         if not include_git:
             dirnames[:] = [d for d in dirnames if d != ".git"]
 
-        # Get all hash file subdirectories.
+        # TODO: Fix the bug where checking crashes when checking a directory
+        # which has been unentombed.
+
+        # Get all data directory subdirectories.
         if constants.ENTOMB_DIRECTORY_NAME in dirnames:
             data_directory = os.path.join(
                 root_dir,
                 constants.ENTOMB_DIRECTORY_NAME,
-                constants.HASHES_DIRECTORY_NAME,
+                constants.DATA_DIRECTORY_NAME,
             )
             data_directory_subdirectories = os.listdir(data_directory)
         else:
@@ -84,20 +87,21 @@ def check_files(path, include_git):
         # Count the directory.
         directory_count += 1
 
-        # Find any hash subdirectories which don't correspond to a file and
-        # create errors for them.
-        hash_diretories_without_files = [
+        # Find any data directory subdirectories which don't correspond to a
+        # file and create errors for them.
+        data_subdirectories_without_files = [
             s for s in data_directory_subdirectories if s not in filenames
         ]
-        for hash_directory in hash_diretories_without_files:
-            hash_directory_path = os.path.join(
+        for data_subdirectory in data_subdirectories_without_files:
+            data_subdirectory_path = os.path.join(
                 root_dir,
                 constants.ENTOMB_DIRECTORY_NAME,
-                constants.HASHES_DIRECTORY_NAME,
-                hash_directory,
+                constants.DATA_DIRECTORY_NAME,
+                data_subdirectory,
             )
-            msg = "{} has no corresponding file.".format(hash_directory_path)
-            errors.append(msg)
+            errors.append(
+                "{} has no corresponding file.".format(data_subdirectory_path),
+            )
 
         # Examine each file path.
         for filename in filenames:
@@ -109,31 +113,33 @@ def check_files(path, include_git):
 
             # Count the file.
             else:
-                # Does it had a corresponding hash directory?
-                has_hash_directory = filename in data_directory_subdirectories
+                # Does it had a corresponding data subdirectory?
+                has_data_subdirectory = (
+                    filename in data_directory_subdirectories
+                )
 
                 # Is it immutable?
                 is_immutable = utilities.file_is_immutable(file_path)
 
-                # If it's mutable and has a hash directory, that's an error.
-                if has_hash_directory and not is_immutable:
+                # If it's mutable and has a data subdirectory, that's an error.
+                if has_data_subdirectory and not is_immutable:
                     msg = "{} should be immutable but isn't.".format(file_path)
                     errors.append(msg)
                     files_with_errors_count += 1
 
-                # If it's immutable and doesn't have a hash directory, that's
-                # an error.
-                elif is_immutable and not has_hash_directory:
+                # If it's immutable and doesn't have a data subdirectory,
+                # that's an error.
+                elif is_immutable and not has_data_subdirectory:
                     msg = (
-                        "{} is immutable but doesn't have a hash directory."
+                        "{} is immutable but doesn't have a data subdirectory."
                         .format(file_path)
                     )
                     errors.append(msg)
                     files_with_errors_count += 1
 
                 # Files that have been entombed.
-                elif is_immutable and has_hash_directory:
-                    contents_are_okay = _hash_files_are_okay(file_path)
+                elif is_immutable and has_data_subdirectory:
+                    contents_are_okay = _data_files_are_okay(file_path)
                     if contents_are_okay:
                         entombed_file_count += 1
                     else:
@@ -248,23 +254,23 @@ def _print_full_report(directory_count, entombed_file_count, errors,
     utilities.print_errors(errors)
 
 
-def _hash_files_are_okay(file_path):
+def _data_files_are_okay(file_path):
     # TODO: Put the next line in a try/except block.
-    actual_contents = _get_hash_file_contents(file_path)
-    hash_time = json.loads(actual_contents)["hash_time"]
-    expected_contents = utilities.build_hash_file_contents(
+    actual_contents = _get_data_file_contents(file_path)
+    checksum_time = json.loads(actual_contents)["checksum_time"]
+    expected_contents = utilities.build_data_file_contents(
         file_path,
-        hash_time,
+        checksum_time,
     )
     # Check that actual and expected contents match.
     if actual_contents != expected_contents:
         return False
 
     # Check that all data files are immutable and read-only.
-    hash_file_paths = _get_hash_file_paths(file_path)
-    for hash_file_path in hash_file_paths:
-        is_immutable = utilities.file_is_immutable(hash_file_path)
-        statinfo = os.stat(hash_file_path)
+    data_file_paths = _get_data_file_paths(file_path)
+    for data_file_path in data_file_paths:
+        is_immutable = utilities.file_is_immutable(data_file_path)
+        statinfo = os.stat(data_file_path)
         # TODO: Make utilities.file_is_read_only(path) function.
         is_read_only = oct(statinfo.st_mode).endswith("444")
         if not is_immutable or not is_read_only:
@@ -273,39 +279,39 @@ def _hash_files_are_okay(file_path):
     return True
 
 
-def _get_hash_file_paths(path):
+def _get_data_file_paths(path):
     file_directory, filename = os.path.split(path)
-    hash_directory_path = os.path.join(
+    data_directory_path = os.path.join(
         file_directory,
         constants.ENTOMB_DIRECTORY_NAME,
-        constants.HASHES_DIRECTORY_NAME,
+        constants.DATA_DIRECTORY_NAME,
         filename,
     )
-    hash_file_names = os.listdir(hash_directory_path)
-    hash_file_paths = []
-    for hash_file_name in hash_file_names:
-        hash_file_path = os.path.join(hash_directory_path, hash_file_name)
-        hash_file_paths.append(hash_file_path)
+    data_file_names = os.listdir(data_directory_path)
+    data_file_paths = []
+    for data_file_name in data_file_names:
+        data_file_path = os.path.join(data_directory_path, data_file_name)
+        data_file_paths.append(data_file_path)
 
-    return hash_file_paths
+    return data_file_paths
 
 
-def _get_hash_file_contents(path):
+def _get_data_file_contents(path):
     # Parameter check.
     assert os.path.isfile(path)
     assert not os.path.islink(path)
 
-    hashes = set()
+    contents_list = set()
 
-    hash_file_paths = _get_hash_file_paths(path)
-    for hash_file_path in hash_file_paths:
-        with open(hash_file_path, "r") as _file:
+    data_file_paths = _get_data_file_paths(path)
+    for data_file_path in data_file_paths:
+        with open(data_file_path, "r") as _file:
             contents = _file.read()
-            hashes.add(contents)
-    hashes_count = len(hashes)
-    if hashes_count == 1:
-        return list(hashes)[0]
-    if hashes_count == 0:
-        raise Exception("TODO: There are no hashes")
-    if hashes_count > 1:
-        raise Exception("TODO: There are multiple hashes")
+            contents_list.add(contents)
+    contents_count = len(contents_list)
+    if contents_count == 1:
+        return list(contents_list)[0]
+    if contents_count == 0:
+        raise Exception("TODO: There are no contents")
+    if contents_count > 1:
+        raise Exception("TODO: There are multiple contents")

@@ -415,7 +415,7 @@ def _prompt_for_sudo():
     print("** privileges are required.")
     print()
     # TODO: Show a different message when `--check` is being run, explaining
-    # that as part of the checking process hash files need to be written and
+    # that as part of the checking process data files need to be written and
     # made immutable, so that it why root is required.
     subprocess.run(
         ["sudo", "-v"],

@@ -118,36 +118,36 @@ def process_objects(path, immutable, include_git, dry_run):
     utilities.print_errors(errors)
 
 
-def _check_hash_files(path, is_immutable):
-    # Check that hash files exist and are correct for an immutable file, and
+def _check_data_files(path, is_immutable):
+    # Check that data files exist and are correct for an immutable file, and
     # don't exist for a mutable file.
-    hash_file_paths = _get_hash_file_paths(path)
+    data_file_paths = _get_data_file_paths(path)
     if is_immutable:
-        for hash_file_path in hash_file_paths:
-            with open(hash_file_path, "r") as _file:
+        for data_file_path in data_file_paths:
+            with open(data_file_path, "r") as _file:
                 contents = _file.read()
-            hash_time = json.loads(contents)["hash_time"]
-            expected_contents = utilities.build_hash_file_contents(
+            checksum_time = json.loads(contents)["checksum_time"]
+            expected_contents = utilities.build_data_file_contents(
                 path,
-                hash_time,
+                checksum_time,
             )
             if contents != expected_contents:
                 print(contents)
                 print(expected_contents)
                 raise Exception("")  # TODO: What sort / what message?
     else:
-        hash_file_directory = os.path.dirname(hash_file_paths[0])
-        if os.path.exists(hash_file_directory):
+        data_file_directory = os.path.dirname(data_file_paths[0])
+        if os.path.exists(data_file_directory):
             raise Exception("")  # TODO: What sort / what message?
 
 
-def _create_hash_files(path):
-    """Create multiple redundant hash files for the file path.
+def _create_data_files(path):
+    """Create multiple redundant data files for the file path.
 
     Parameters
     ----------
     path : str
-        The absolute path of the file to create hash files for.
+        The absolute path of the file to create data files for.
 
     Returns
     -------
@@ -165,38 +165,38 @@ def _create_hash_files(path):
 
     # Ensure the data file directory exists.
     file_directory, filename = os.path.split(path)
-    hashes_directory_path = os.path.join(
+    data_subdirectory_path = os.path.join(
         file_directory,
         constants.ENTOMB_DIRECTORY_NAME,
-        constants.HASHES_DIRECTORY_NAME,
+        constants.DATA_DIRECTORY_NAME,
         filename,
     )
-    os.makedirs(hashes_directory_path, exist_ok=True)
+    os.makedirs(data_subdirectory_path, exist_ok=True)
 
-    # Check that no hash files already exist.
-    existing_files = os.listdir(hashes_directory_path)
+    # Check that no data files already exist.
+    existing_files = os.listdir(data_subdirectory_path)
     if existing_files:
         raise Exception  # TODO: What sort and with what information?
 
     # Get data file paths.
-    hash_file_paths = _get_hash_file_paths(path)
+    data_file_paths = _get_data_file_paths(path)
 
     # Create data file contents.
-    hash_file_contents = utilities.build_hash_file_contents(path)
+    data_file_contents = utilities.build_data_file_contents(path)
 
-    # Create each hash file.
-    for hash_file_path in hash_file_paths:
+    # Create each data file.
+    for data_file_path in data_file_paths:
 
-        # Create the hash file.
-        with open(hash_file_path, "w") as _file:
-            _file.write(hash_file_contents)
+        # Create the data file.
+        with open(data_file_path, "w") as _file:
+            _file.write(data_file_contents)
             # TODO: Profile without the next two lines.
             _file.flush()
             os.fsync(_file.fileno())
 
-        # Make the hash file read-only and immutable.
-        os.chmod(hash_file_path, 0o444)
-        _set_attribute(constants.IMMUTABLE_ATTRIBUTE, hash_file_path)
+        # Make the data file read-only and immutable.
+        os.chmod(data_file_path, 0o444)
+        _set_attribute(constants.IMMUTABLE_ATTRIBUTE, data_file_path)
 
 
 def _delete_directory_if_empty(path):
@@ -229,8 +229,8 @@ def _delete_directory_if_empty(path):
         os.rmdir(path)
 
 
-def _delete_hashes_directory(path):
-    """Delete all hash files for the file path.
+def _delete_data_directory(path):
+    """Delete all data files for the file path.
 
     Directories which deleting the data files leaves empty are deleted as well.
 
@@ -259,29 +259,29 @@ def _delete_hashes_directory(path):
         file_directory,
         constants.ENTOMB_DIRECTORY_NAME,
     )
-    hashes_directory_path = os.path.join(
+    data_directory_path = os.path.join(
         entomb_directory_path,
-        constants.HASHES_DIRECTORY_NAME,
+        constants.DATA_DIRECTORY_NAME,
     )
-    file_hashes_directory_path = os.path.join(hashes_directory_path, filename)
+    file_data_directory_path = os.path.join(data_directory_path, filename)
 
     # Make all files in data directory mutable.
-    for root_dir, _, filenames in os.walk(file_hashes_directory_path):
+    for root_dir, _, filenames in os.walk(file_data_directory_path):
         for filename in filenames:
             file_path = os.path.join(root_dir, filename)
             _set_attribute(constants.MUTABLE_ATTRIBUTE, file_path)
 
-    # Delete the hashes directory if it's now empty.
-    shutil.rmtree(file_hashes_directory_path)
+    # Delete the data subdirectory if it's now empty.
+    shutil.rmtree(file_data_directory_path)
 
-    # Delete the .entomb directory if it's now empty.
-    _delete_directory_if_empty(hashes_directory_path)
+    # Delete the .entomb/data directory if it's now empty.
+    _delete_directory_if_empty(data_directory_path)
 
     # Delete the .entomb directory if it's now empty.
     _delete_directory_if_empty(entomb_directory_path)
 
 
-def _get_hash_file_paths(path):
+def _get_data_file_paths(path):
     """Get data file paths for the file path.
 
     Parameters
@@ -307,16 +307,16 @@ def _get_hash_file_paths(path):
     file_directory, filename = os.path.split(path)
 
     # Build data file names.
-    suffixes = range(1, constants.HASH_FILES_PER_FILE + 1)
+    suffixes = range(1, constants.DATA_FILES_PER_FILE + 1)
     data_file_names = [
-        "{}.hash.{}".format(filename, suffix) for suffix in suffixes
+        "{}.data.{}".format(filename, suffix) for suffix in suffixes
     ]
 
     # Build data directory path.
     data_directory_path = os.path.join(
         file_directory,
         constants.ENTOMB_DIRECTORY_NAME,
-        constants.HASHES_DIRECTORY_NAME,
+        constants.DATA_DIRECTORY_NAME,
         filename,
     )
 
@@ -414,9 +414,9 @@ def _process_object(path, immutable, dry_run):
         msg = "Immutable attribute not settable for {}".format(path)
         raise exceptions.SetAttributeError(msg) from error
 
-    # Make sure that the state (or absence) of hash files related to the file
+    # Make sure that the state (or absence) of data files related to the file
     # is correct.
-    _check_hash_files(path, is_immutable)
+    _check_data_files(path, is_immutable)
 
     # Work out whether to change the file's immutability.
     change_attribute = immutable != is_immutable
@@ -425,11 +425,11 @@ def _process_object(path, immutable, dry_run):
     if change_attribute and not dry_run:
         if immutable:
             _set_attribute(constants.IMMUTABLE_ATTRIBUTE, path)
-            _create_hash_files(path)
+            _create_data_files(path)
             _write_to_log(constants.ADDED, path)
         else:
             _set_attribute(constants.MUTABLE_ATTRIBUTE, path)
-            _delete_hashes_directory(path)
+            _delete_data_directory(path)
             _write_to_log(constants.REMOVED, path)
 
     # The value of change_attribute is a proxy for whether the immutable
