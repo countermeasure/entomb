@@ -124,8 +124,6 @@ def main(argv):
         )
         return 0
 
-    # TODO: If unsetting immutibility, prompt for confirmation first.
-
     # Set the immutable attribute for everything on the path, then return a
     # zero exit status.
     processing.process_objects(
@@ -166,7 +164,6 @@ def _check_argument_conflicts(args):
 
     """
     # Match each argument with a list of the arguments compatible with it.
-    # TODO: What can't -c and -g be passed in together?
     compatibility = {
         constants.CHECK_ARG: [constants.INCLUDE_GIT_ARG],
         constants.DRY_RUN_ARG: [
@@ -174,6 +171,7 @@ def _check_argument_conflicts(args):
             constants.UNSET_ARG,
         ],
         constants.INCLUDE_GIT_ARG: [
+            constants.CHECK_ARG,
             constants.DRY_RUN_ARG,
             constants.LIST_IMMUTABLE_ARG,
             constants.LIST_MUTABLE_ARG,
@@ -414,9 +412,6 @@ def _prompt_for_sudo():
     print("** To set or unset files' immutable attributes, root")
     print("** privileges are required.")
     print()
-    # TODO: Show a different message when `--check` is being run, explaining
-    # that as part of the checking process data files need to be written and
-    # made immutable, so that it why root is required.
     subprocess.run(
         ["sudo", "-v"],
         check=True,

@@ -8,7 +8,8 @@ Unreleased
 
 Added
 ~~~~~
-- TODO
+- Added data files to store the checksum, mtime and date added for every file.
+- Added ``--check`` / ``-c`` argument for checking files against data files.
 
 
 v0.4.0

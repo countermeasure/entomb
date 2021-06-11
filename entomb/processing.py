@@ -80,7 +80,10 @@ def process_objects(path, immutable, include_git, dry_run):
                 attribute_settable_count += 1
                 if attribute_was_changed:
                     attribute_changed_count += 1
-            except exceptions.SetAttributeError as error:
+            except (
+                exceptions.SetAttributeError,
+                exceptions.FileIntegrityError,
+            ) as error:
                 errors.append(error)
 
             # Count the file.
@@ -119,9 +122,39 @@ def process_objects(path, immutable, include_git, dry_run):
 
 
 def _check_data_files(path, is_immutable):
-    # Check that data files exist and are correct for an immutable file, and
-    # don't exist for a mutable file.
+    """Check the state of data files for a file.
+
+    This means that data files exist and are correct for an immutable file, and
+    don't exist for a mutable file.
+
+    Parameters
+    ----------
+    path : str
+        The absolute path of a file to check data files for.
+    is_immutable : bool
+        Whether the file's immutable attribute is set.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the path is a directory, is a link or does not exist.
+    GetAttributeError
+        If the path's immutable attribute cannot be accessed.
+    FileIntegrityError
+        If there is a mismatch between data files and the file.
+
+    """
+    # Parameter check.
+    assert not os.path.isdir(path)
+    assert not os.path.islink(path)
+    assert os.path.exists(path)
+
     data_file_paths = _get_data_file_paths(path)
+
     if is_immutable:
         for data_file_path in data_file_paths:
             with open(data_file_path, "r") as _file:
@@ -132,15 +165,48 @@ def _check_data_files(path, is_immutable):
                 checksum_time,
             )
             if contents != expected_contents:
-                print(contents)
-                print(expected_contents)
-                raise Exception("")  # TODO: What sort / what message?
+                msg = _compare_contents_with_expected_contents(
+                    contents,
+                    expected_contents,
+                )
+                raise exceptions.FileIntegrityError(msg)
+
     else:
         data_file_directory = os.path.dirname(data_file_paths[0])
         if os.path.exists(data_file_directory):
-            raise Exception("")  # TODO: What sort / what message?
+            msg = "TODO {}".format(path)
+            raise exceptions.FileIntegrityError(msg)
 
 
+def _compare_contents_with_expected_contents(contents, expected_contents):
+    """TODO.
+
+    Parameters
+    ----------
+
+    """
+    # TODO: State the piece of the data file which doesn't match up
+    # - like mtime in data file is A but is actually B"
+    errors = []
+
+    contents_dict = json.loads(contents)
+    expected_contents_dict = json.loads(expected_contents)
+
+    for key, expected_value in expected_contents_dict.items():
+        value = contents_dict(key)
+        if value != expected_value:
+            msg = (
+                '"{}" should be "{}" but is "{}"'
+                .format(key, expected_value, value)
+            )
+            errors.append(msg)
+
+    errors.sort()
+    errors_string = " | ".join(errors)
+
+    return "{} : {}".format(path, errors_string)
+
+k
 def _create_data_files(path):
     """Create multiple redundant data files for the file path.
 
@@ -417,7 +483,6 @@ def _process_object(path, immutable, dry_run):
     # Make sure that the state (or absence) of data files related to the file
     # is correct.
     _check_data_files(path, is_immutable)
-
     # Work out whether to change the file's immutability.
     change_attribute = immutable != is_immutable
 

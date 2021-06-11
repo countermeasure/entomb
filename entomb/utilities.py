@@ -13,11 +13,35 @@ from entomb import (
 
 
 def build_data_file_contents(path, checksum_time=None):
-    """TODO.
+    """Build the contents of a data file.
 
-    TODO: Note that checksum_time must be a string, and the form it must be in.
+    Parameters
+    ----------
+    path : str
+        An absolute path.
+    checksum_time : str, optional
+        A string in the form of constants.DATETIME_FORMAT representing a
+        datetime. Default is None.
+
+    Returns
+    -------
+    str
+        The contents of the data file as a JSON-formatted string.
+
+    Raises
+    ------
+    AssertionError
+        If the path is a directory, is a link or does not exist.
+    GetAttributeError
+        If the path's immutable attribute cannot be accessed.
 
     """
+    # Parameter check.
+    assert not os.path.isdir(path)
+    assert not os.path.islink(path)
+    assert os.path.exists(path)
+
+    # Assemble the contents of the data file.
     filename = os.path.basename(path)
     statinfo = os.stat(path)
     st_mtime = statinfo.st_mtime
@@ -26,16 +50,17 @@ def build_data_file_contents(path, checksum_time=None):
         datetime.timezone.utc,
     )
     mtime = raw_mtime.strftime(constants.DATETIME_FORMAT)
-    st_size = statinfo.st_size
+    size = statinfo.st_size
     checksum = _get_checksum(path)
     if not checksum_time:
         now = datetime.datetime.now(datetime.timezone.utc)
         checksum_time = now.strftime(constants.DATETIME_FORMAT)
 
+    # Create the data file contents as a JSON-formatted string.
     data = {
         "file": filename,
         "file_mtime": mtime,
-        "file_size": st_size,
+        "file_size": size,
         "checksum": checksum,
         "checksum_time": checksum_time,
     }
